@@ -1,0 +1,211 @@
+---
+metadata:
+  title: |
+    Report changes to Social Security
+  short title: |
+    SSA Report Changes
+  description: |
+    This interview produces a letter for the Social Security Administration
+    that explains any changes that might affect your benefits.
+  authors:
+    - name: Quinten Steenhuis
+      organization: Volunteer Lawyer's Project of the Boston Bar Association
+  revision_date: 2019-02-12
+---
+modules:
+  - docassemble.base.util
+  - docassemble.ssioverpaymentwaiver.ssa
+  - docassemble.income.income
+---
+objects:
+  - client: Individual
+  - ssa_office: Person
+  - job: DAEmpty # Job
+---
+mandatory: True
+code: |
+  letter_date
+  intro_screen
+  if needs_to_report_change == 'no':
+    wrong_interview
+  elif needs_to_report_change == 'unsure':
+    interview_warning
+  client.name.first
+  ssa_office.name.text
+  changes
+  other_changes
+  download_form
+---
+code: |
+  letter_date = today()
+---
+interview help:
+  heading: About this interview
+  content: |
+    This free interview was created by the Volunteer Lawyer's Project of the
+    Boston Bar Foundation, a non-profit legal aid agency in Boston, Massachusetts.
+  
+    All information sent to and from this server is encrypted
+    using military-grade security standards.
+    If you create an account on our system, your responses
+    will be encrypted on our server at all times.
+    Only someone with your password will be able to view the contents of your
+    interview. It's important to both keep your password
+    secure and not to lose it, because we will not be able
+    to retrieve your interview without it.
+---
+field: intro_screen
+question: |
+  We're here to help.
+subquestion: |
+  This is a tool for people on SSI or SSDI disability benefits. It will help you write
+  a letter to the Social Security Administration (Social Security) to tell them about 
+  [important changes](https://blog.ssa.gov/reporting-changes-is-your-responsibility/) 
+  in your life they need to know about.
+
+  Before you start, you need to know if you are on
+  
+  * SSI (Supplemental Security Income), 
+  * SSDI (Social Security Disability) or
+  * SSI and SSDI.
+  
+  If you are working and getting paid, you also need:
+  the name and address of the place you work, 
+  the number of hours you work, and
+  how much you are paid.
+  Your pay stubs should have all this information on them, so having them with you 
+  from the start will be helpful.
+  If you are answering questions  for someone else, you need their:
+  full name, 
+  address, and 
+  Social Security number.
+---
+question: |
+  Do you need to report a change to Social Security?
+subquestion: |
+  This interview is for people who need to report new information to
+  Social Security. Does that apply to you?
+field: needs_to_report_change
+buttons:
+  - Yes: yes
+  - No: no
+  - I'm not sure: unsure
+---
+event: wrong_interview
+question: |
+  Sorry, this is the wrong interview for you.  
+buttons:
+  Exit: exit
+  Restart: restart  
+---
+field: interview_warning
+question: |
+  This may not be the right interview for you.
+buttons:
+  - Keep going
+  - Restart: restart
+  - Exit: exit
+---
+question: |
+  What is your name?
+fields:
+  - First name: client.name.first
+  - Middle name: client.name.middle
+    required: False
+  - Last name: client.name.last
+---
+question: |
+  What Social Security office do you want to send the letter to?
+fields:
+  - no label: ssa_office.name.text
+---
+question: |
+  Social Security Number
+fields:
+  - What is your Social Security Number?: client.ssn
+    validate: is_valid_ssn
+under: |
+  {Why} do we need this?
+terms:
+  - Why: |
+      The Social Security Administration needs this number in order to 
+      apply the new information to your account.
+---
+question: |
+  What kind of Social Security benefits are you receiving?
+field: benefits_type
+choices:
+  - SSI (Supplemental Security Income): ssi
+  - SSDI (Social Security Disability): ssdi
+under: |
+  How can I tell?
+---
+question: |
+  What kind of change do you have to report?
+fields:
+  - note: |
+      Select anything that has changed.
+  - I started working for an employer: working
+    datatype: yesnowide
+  - I started working for myself: working_for_self
+    datatype: yesnowide
+  - no label: changes
+    show if:
+      code: |
+        benefits_type == 'ssi'
+    datatype: checkboxes
+    choices:
+      - I moved
+      - I was in jail
+      - I was in the hospital
+      - I was in a nursing home
+      - I was outside of the United States for more than 30 days in a row
+      - The number of people in my household changed (E.g., I am now single/married/divorced, or had a child)
+      - I received assistance to pay for rent or food
+      - I received money from a lawsuit or lottery winnings
+      - My immigration status changed
+---
+question: |
+  Is there anything else that you would like to report to Social Security?
+fields:
+  - no label: other_changes
+    datatype: area
+---
+generic object: Person
+question: |
+  ${x}'s Contact Information
+fields:
+  - Home or cell phone number: x.phone_number
+  - Work phone number: x.phone_work
+    required: False
+  - Address: x.address.address
+    address autocomplete: True
+  - Unit or Apt: x.address.unit
+    required: False
+  - City: x.address.city
+  - State: x.address.state
+    code: |
+      states_list()
+  - Zip code: x.address.zip
+  - County: x.address.county
+    required: False
+---
+code: |
+  change_type = "Living"
+---
+question: |  
+  When did the change happen?
+fields:
+  - Date of change: date_of_change
+    datatype: date
+---
+event: download_form
+question: |
+  Here is your document.
+attachment:
+  name: ${client}'s Letter to SSA
+  filename: ${format_date(today())} - ${client.possessive('letter to SSA')}
+  docx template file: ssa_report_change.docx
+  valid formats:
+    - pdf
+    - docx
