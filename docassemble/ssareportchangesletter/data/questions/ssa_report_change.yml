@@ -14,13 +14,16 @@ metadata:
 ---
 modules:
   - docassemble.base.util
-  - docassemble.ssioverpaymentwaiver.ssa
+  - .ssa
   - docassemble.income.income
 ---
 objects:
   - client: Individual
   - ssa_office: Person
   - job: DAEmpty # Job
+---
+comment: |
+  http://services6.arcgis.com/zFiipv75rloRP5N4/ArcGIS/rest/services/Office_Points/FeatureServer/1/query?where=&objectIds=&time=&geometry=-96.915919%2C32.693022&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&resultType=none&distance=10&units=esriSRUnit_StatuteMile&returnGeodetic=false&outFields=*&returnGeometry=true&multipatchOption=xyFootprint&maxAllowableOffset=&geometryPrecision=&outSR=4326&datumTransformation=&applyVCSProjection=false&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnExtentOnly=false&returnDistinctValues=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&returnZ=false&returnM=false&returnExceededLimitFeatures=true&quantizationParameters=&sqlFormat=none&f=pgeojson&token=
 ---
 mandatory: True
 code: |

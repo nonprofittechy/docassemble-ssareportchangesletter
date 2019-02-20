@@ -45,7 +45,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
 setup(name='docassemble.ssareportchangesletter',
       version='0.0.1',
       description=('An interview to help an SSI or SSDI recipient report changes to the Social Security Administration'),
-      long_description=u'# docassemble.ssareportchangesletter\n\nAn interview to help an SSI or SSDI recipient report changes to the Social Security Administration\n\n## Author\n\nQuinten Steenhuis, qsteenhuis@gmail.com\n\n',
+      long_description=u'# docassemble.ssareportchangesletter\r\n\r\nAn interview to help an SSI or SSDI recipient report changes to the Social Security Administration\r\n\r\n## Author\r\n\r\nQuinten Steenhuis, qsteenhuis@gmail.com\r\n\r\n',
       long_description_content_type='text/markdown',
       author='Quinten Steenhuis',
       author_email='qsteenhuis@gmail.com',

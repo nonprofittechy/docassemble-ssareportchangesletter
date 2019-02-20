@@ -1,0 +1,38 @@
+---
+imports:
+  - json
+---
+modules:
+  - .ssa
+---
+objects:
+  - fo: FieldOfficeSearcher
+  
+---
+code: |
+  officelist = fo.nearest_offices_by_lat_lng(lat, lng, distance=50)
+---
+mandatory: True
+question: |
+  Enter a location
+subquestion:
+  E.g. 42.3641657, -71.0626028
+fields:
+  - Latitude: lat
+    datatype: number
+  - Longitude: lng
+    datatype: number
+---
+mandatory: True
+question: |
+  Question
+subquestion: |
+
+  Url: {fo.url}
+  
+  ### Offices found
+  % for office in officelist:
+  * ${office}
+      * ${office.address}, ${office.suite}, ${office.city}
+  % endfor
+  
