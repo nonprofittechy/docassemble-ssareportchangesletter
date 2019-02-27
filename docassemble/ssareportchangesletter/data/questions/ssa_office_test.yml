@@ -6,33 +6,34 @@ modules:
   - .ssa
 ---
 objects:
-  - fo: FieldOfficeSearcher
-  
+  - officelist: FieldOfficeList
+  - my_address: Address
 ---
 code: |
-  officelist = fo.nearest_offices_by_lat_lng(lat, lng, distance=50)
+  officelist.load_offices(my_address)
+  officelist.gathered = True
 ---
-mandatory: True
 question: |
-  Enter a location
-subquestion:
-  E.g. 42.3641657, -71.0626028
+  Your address
 fields:
-  - Latitude: lat
-    datatype: number
-  - Longitude: lng
-    datatype: number
+  - Address: my_address.address
+    #address autocomplete: True
+  - City: my_address.city
+  - State: my_address.state
+  - Zip: my_address.zip
+
 ---
 mandatory: True
 question: |
   Question
 subquestion: |
-
-  Url: {fo.url}
+  
+  ${officelist}
   
   ### Offices found
+  
   % for office in officelist:
   * ${office}
-      * ${office.address}, ${office.suite}, ${office.city}
+      * ${office.address.on_one_line()}
   % endfor
   

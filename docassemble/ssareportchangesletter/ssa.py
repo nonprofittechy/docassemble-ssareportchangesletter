@@ -1,4 +1,4 @@
-from docassemble.base.util import validation_error, Address, DAObject, text_type
+from docassemble.base.util import validation_error, Address, DAObject, DAList, text_type, Person
 import re
 import requests
 
@@ -10,27 +10,65 @@ def is_valid_ssn(x):
         validation_error("Write the Social Security Number like this: XXX-XX-XXXX")
     return True
 
-class FieldOffice(DAObject):
+class FieldOffice(Person):
     def init(self, *pargs, **kwargs):
         super(FieldOffice, self).init(*pargs, **kwargs)
 
-    def __unicode__(self):
-        return self.title + ' (' + self.city + ')'
-    
-    def __str__(self):
-        return str(self.__unicode__())
+class FieldOfficeList(DAList):
+    def init(self, *pargs, **kwargs):
+        super(FieldOfficeList, self).init(*pargs, **kwargs)
+        self.auto_gather = False
+        self.object_type = FieldOffice
+        self.initializeAttribute('searcher',FieldOfficeSearcher)
+
+        if hasattr(self, 'address'):
+            self.load_offices(self.address, 3)
+            self.gathered = True
+
+    def load_offices(self, address, number=3):
+        """ Find at least number offices closest to the given address"""
+
+        distance = 5 # start out searching for offices within 5 miles
+
+        results = self.searcher.nearest_offices(address, distance=distance)
+
+        loop = 1
+        max_loop = 9
+
+        try:
+            # Keep expanding the search radius if we didn't get enough matches in the default distance
+            while loop < max_loop and len(results['features']) < number:
+                distance *= 2
+                results = self.searcher.nearest_offices(address, distance=distance)
+                loop += 1
+        except:
+            return None
+
+        for item in results['features']:
+            fo = self.appendObject()
+            fo.name.text = item['properties']['AddressLine1'] 
+            fo.title = item['properties']['OfficeName']
+            fo.address.address = item['properties']['AddressLine3']
+            fo.address.unit = item['properties']['AddressLine2']
+            fo.address.city = item['properties']['City']
+            fo.address.state = item['properties']['State']
+            fo.address.zip = item['properties']['ZIP5']
+            fo.office_code = item['properties']['OfficeCode']
+            fo.phone_number = item['properties']['BusinessPhone']
+            fo.geoJSON = item
+
+        self.gathered = True
+
 
 class FieldOfficeSearcher(DAObject):
     def init(self, *pargs, **kwargs):
         super(FieldOfficeSearcher, self).init(*pargs, **kwargs)
 
     #@staticmethod
-    def nearest_offices_by_lat_lng(self, latitude, longitude, number=3, distance=5):
-        """Recursively search for the nearest number SSA offices, expanding search area if we receive too few results"""
+    def nearest_offices_by_lat_lng(self, latitude, longitude, distance=5):
+        """Search for nearby SSA offices, and return raw GeoJSON results"""
         url =   "http://services6.arcgis.com/zFiipv75rloRP5N4/ArcGIS/rest/services/Office_Points/FeatureServer/1/query"
         
-        results = []
-
         params = {
             'geometry': str(longitude) + ',' + str(latitude),
             'distance': distance,
@@ -58,7 +96,7 @@ class FieldOfficeSearcher(DAObject):
             'where': '',
             'objectIds': '',
             'time': '',
-            'maxAllowableOffset': '',
+            'maxAllowableOffset': '', 
             'geometryPrecision': '',
             'datumTransformation': '',
             'orderByFields': '',
@@ -76,24 +114,17 @@ class FieldOfficeSearcher(DAObject):
 
         jdata = r.json()
 
-        try:
-            for item in jdata['features']:
-                fo = FieldOffice()
-                fo.title = item['properties']['AddressLine1']
-                fo.address = item['properties']['AddressLine3']
-                fo.suite = item['properties']['AddressLine2']
-                fo.city = item['properties']['City']
-                fo.state = item['properties']['State']
-                results.append(fo)
-        except:
-            return []
-        
-        return results
+        return jdata
 
-
-    def nearest_offices(self, address, number=3, distance=5, results=[]):
-        return self.nearest_office_by_lat_lng(address.location.longitude, address.location.latitude, number=number, distance=distance, results=results)
-
+    def nearest_offices(self, address, distance=5):
+        if hasattr(address.location,'longitude') and hasattr(address.location, 'latitude'):
+            return self.nearest_offices_by_lat_lng(address.location.latitude,address.location.longitude, distance=distance)
+        else:
+            address.geolocate()
+            if address.geolocate_success:
+                return self.nearest_offices_by_lat_lng(address.location.latitude,address.location.longitude, distance=distance)
+            else:
+                return None
 
 if __name__ == '__main__':
     # import pprint
