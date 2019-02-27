@@ -35,9 +35,11 @@ code: |
   elif needs_to_report_change == 'unsure':
     interview_warning
   client.name.first
-  ssa_office.name.text
   changes
   other_changes
+  date_of_change  
+  ssa_office.name.text
+  client.signature
   download_form
 ---
 code: |
@@ -126,12 +128,16 @@ question: |
   What Social Security office do you want to send the letter to?
 subquestion: |
   We have found the following offices that are close to your address.
+  
+  ${map_of([office for office in officelist])}
 fields:
   - Social Security Office: ssa_office
     datatype: object
     input type: radio
     choices: officelist
     disable others: True
+    object labeler: |
+      lambda y: (y.name.text + ': ' + y.address.city)
   - Office name: ssa_office.name.text
   - Address: ssa_office.address.address
   - Suite: ssa_office.address.unit
@@ -152,6 +158,31 @@ terms:
   - Why: |
       The Social Security Administration needs this number in order to 
       apply the new information to your account.
+script: |
+    <script type="text/javascript">
+      document.getElementById(btoa('client.ssn')).onkeyup = function() {
+      var val = this.value.replace(/\D/g, '');
+      var newVal = '';
+
+      if(val.length > 4) {
+        this.value = val;
+      }
+
+      if((val.length > 3) && (val.length < 6)) {
+        newVal += val.substr(0, 3) + '-';
+        val = val.substr(3);
+      }
+
+      if (val.length > 5) {
+        newVal += val.substr(0, 3) + '-';
+        newVal += val.substr(3, 2) + '-';
+        val = val.substr(5);
+      }
+      newVal += val;
+      this.value = newVal.substring(0, 11);
+      };    
+      
+    </script>
 ---
 question: |
   What kind of Social Security benefits are you receiving?
@@ -201,7 +232,7 @@ fields:
   - Work phone number: x.phone_work
     required: False
   - Address: x.address.address
-    # address autocomplete: True
+    address autocomplete: True
   - Unit or Apt: x.address.unit
     required: False
   - City: x.address.city
@@ -221,12 +252,18 @@ fields:
   - Date of change: date_of_change
     datatype: date
 ---
+question: |
+  Sign your letter
+signature: client.signature
+under: |
+  ${client}
+---
 event: download_form
 question: |
   Here is your document.
 attachment:
   name: ${client}'s Letter to SSA
-  filename: ${format_date(today())} - ${client.possessive('letter to SSA')}
+  filename: ${space_to_underscore(format_date(today()) + client.possessive('letter to SSA'))}
   docx template file: ssa_report_change.docx
   valid formats:
     - pdf
