@@ -43,7 +43,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 setup(name='docassemble.ssareportchangesletter',
-      version='0.0.2',
+      version='0.0.3',
       description=('An interview to help an SSI or SSDI recipient report changes to the Social Security Administration'),
       long_description=u'# docassemble.ssareportchangesletter\r\n\r\nAn interview to help an SSI or SSDI recipient report changes to the Social Security Administration\r\n\r\n## Author\r\n\r\nQuinten Steenhuis, qsteenhuis@gmail.com\r\n\r\n## Changelog\r\n\r\n* 2019-02-26 Use SSA API to list nearby offices',
       long_description_content_type='text/markdown',

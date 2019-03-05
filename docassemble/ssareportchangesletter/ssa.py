@@ -1,4 +1,4 @@
-from docassemble.base.util import validation_error, Address, DAObject, DAList, text_type, Person
+from docassemble.base.util import validation_error, Address, DAObject, DAList, text_type, Person, title_case
 import re
 import requests
 
@@ -46,16 +46,16 @@ class FieldOfficeList(DAList):
 
         for item in results['features']:
             fo = self.appendObject()
-            fo.name.text = item['properties']['AddressLine1'] 
-            fo.title = item['properties']['OfficeName']
-            fo.address.address = item['properties']['AddressLine3']
-            fo.address.unit = item['properties']['AddressLine2']
-            fo.address.city = item['properties']['City']
+            fo.name.text = title_case(item['properties']['AddressLine1']) 
+            fo.title = title_case(item['properties']['OfficeName'])
+            fo.address.address = title_case(item['properties']['AddressLine3'])
+            if item['properties']['AddressLine2']:
+                fo.address.unit = title_case(item['properties']['AddressLine2'])
+            fo.address.city = title_case(item['properties']['City'])
             fo.address.state = item['properties']['State']
             fo.address.zip = item['properties']['ZIP5']
             fo.office_code = item['properties']['OfficeCode']
             fo.phone_number = item['properties']['BusinessPhone']
-            fo.geoJSON = item
 
         self.gathered = True
 

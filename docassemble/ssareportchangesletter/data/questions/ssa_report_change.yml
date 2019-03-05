@@ -10,18 +10,22 @@ metadata:
   authors:
     - name: Quinten Steenhuis
       organization: Volunteer Lawyer's Project of the Boston Bar Association
-  revision_date: 2019-02-12
+  revision_date: 2019-03-02
 ---
 modules:
   - docassemble.base.util
   - .ssa
   - docassemble.income.income
 ---
+imports:
+  - jinja2.utils
+---
 objects:
   - client: Individual
   - ssa_office: Person
-  - job: DAEmpty # Job
+  - jobs: JobList.using(complete_attribute='value') # Job
   - officelist: FieldOfficeList
+  - change_details: DADict.using(auto_gather=False, object_type=DAObject, gathered=True)
 ---
 comment: |
   http://services6.arcgis.com/zFiipv75rloRP5N4/ArcGIS/rest/services/Office_Points/FeatureServer/1/query?where=&objectIds=&time=&geometry=-96.915919%2C32.693022&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&resultType=none&distance=10&units=esriSRUnit_StatuteMile&returnGeodetic=false&outFields=*&returnGeometry=true&multipatchOption=xyFootprint&maxAllowableOffset=&geometryPrecision=&outSR=4326&datumTransformation=&applyVCSProjection=false&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnExtentOnly=false&returnDistinctValues=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&returnZ=false&returnM=false&returnExceededLimitFeatures=true&quantizationParameters=&sqlFormat=none&f=pgeojson&token=
@@ -30,20 +34,21 @@ mandatory: True
 code: |
   letter_date
   intro_screen
-  if needs_to_report_change == 'no':
-    wrong_interview
-  elif needs_to_report_change == 'unsure':
-    interview_warning
   client.name.first
   changes
   other_changes
-  date_of_change  
+  if not working and not working_for_self and (changes.true_values().number() < 1) and not other_changes:
+    wrong_interview
+  else:
+    saw_change_choices
   ssa_office.name.text
+  client.ssn
   client.signature
   download_form
 ---
 code: |
   officelist.load_offices(client.address)
+  found_offices = officelist.number() > 0
   officelist.gathered = True
 ---
 code: |
@@ -103,18 +108,13 @@ buttons:
 ---
 event: wrong_interview
 question: |
-  Sorry, this is the wrong interview for you.  
+  It doesn't look like you need this interview.
+subquestion: |
+  This interview is only for someone who needs to report a change to the
+  Social Security office. You said you didn't have any changes to report.
 buttons:
   Exit: exit
   Restart: restart  
----
-field: interview_warning
-question: |
-  This may not be the right interview for you.
-buttons:
-  - Keep going
-  - Restart: restart
-  - Exit: exit
 ---
 question: |
   What is your name?
@@ -127,17 +127,28 @@ fields:
 question: |
   What Social Security office do you want to send the letter to?
 subquestion: |
+  % if found_offices:
   We have found the following offices that are close to your address.
   
   ${map_of([office for office in officelist])}
+  % endif
 fields:
   - Social Security Office: ssa_office
-    datatype: object
-    input type: radio
+    datatype: object_radio
+    # input type: radio
     choices: officelist
+    none of the above: True
     disable others: True
     object labeler: |
-      lambda y: (y.name.text + ': ' + y.address.city)
+      lambda y: (y.name.text + ': ' + y.address.on_one_line())
+  - note: |
+      Choose an office above, or use the [Office locator](https://secure.ssa.gov/ICON/main.jsp)
+    show if: found_offices
+  - note: |
+      You can use the [Office locator](https://secure.ssa.gov/ICON/main.jsp)
+    show if:
+      variable: found_offices
+      is: false
   - Office name: ssa_office.name.text
   - Address: ssa_office.address.address
   - Suite: ssa_office.address.unit
@@ -195,9 +206,9 @@ under: |
 ---
 question: |
   What kind of change do you have to report?
+subquestion: |
+  Select anything that has changed.
 fields:
-  - note: |
-      Select anything that has changed.
   - I started working for an employer: working
     datatype: yesnowide
   - I started working for myself: working_for_self
@@ -213,22 +224,102 @@ fields:
       - I was in the hospital
       - I was in a nursing home
       - I was outside of the United States for more than 30 days in a row
-      - The number of people in my household changed (E.g., I am now single/married/divorced, or had a child)
+      - The number of people in my household changed
       - I received assistance to pay for rent or food
       - I received money from a lawsuit or lottery winnings
       - My immigration status changed
+---
+code: |
+  jobs.there_are_any = working or working_for_self
+---
+question: |
+  So far you have told us about ${i} jobs.
+subquestion: |
+  Do you have any other jobs to report?
+yesno: jobs.there_is_another
+---
+question: | 
+  Tell me about the ${ ordinal(i) } job you need to report.
+subquestion: |
+  Look at your most recent pay stubs to answer this question.
+fields:
+  - When did you start this job?: jobs[i].start_date
+    datatype: date
+  - Do you work for yourself at this job, or someone else?: jobs[i].employer_type
+    input type: radio
+    choices:
+      - Myself: self
+      - Someone else: employer
+  - Employer's name: jobs[i].employer
+    show if: 
+      variable: jobs[i].employer_type
+      is: "employer"
+  - Address of employer: jobs[i].employer_address
+    required: False
+    address autocomplete: True
+    show if: 
+      variable: jobs[i].employer_type
+      is: "employer"
+  - Is this an hourly job?: jobs[i].is_hourly
+    datatype: yesno
+  - Hourly rate: jobs[i].hourly_rate
+    datatype: currency
+    show if: jobs[i].is_hourly
+    hint: $/hour
+  - I work this many hours every pay check: jobs[i].hours_per_period
+    datatype: integer
+  - Total (gross) pay each pay period: jobs[i].value
+    datatype: currency
+    hide if: jobs[i].is_hourly
+  - What kind of deductible expenses do you have for this job?: jobs[i].deductions
+    datatype: currency
+    show if:
+      variable: jobs[i].employer_type
+      is: "me"
+  - How often do you get paid?: jobs[i].period
+    datatype: integer
+    code: |
+      period_list()
+---
+question: |
+  How did your household change?
+fields:
+  - no label: change_details['The number of people in my household changed'].reasons
+    datatype: checkboxes
+    choices:
+      - I added a new roommate
+      - I divorced my spouse
+      - I married
+      - I had a child
+---
+comment: |
+  This builds a follow-up question that asks about
+  the date each change happened.
+code: |
+  changes_temp = []
+
+  for change in changes.true_values():
+    change_details[change].name = text_type(change)
+    changes_temp.append({
+      'field': "change_details['" + change + "'].date",
+      'datatype': 'date',
+      'label': 'Date that "' + change + '"'
+    })
+  change_choices = changes_temp
 ---
 question: |
   Is there anything else that you would like to report to Social Security?
 fields:
   - no label: other_changes
     datatype: area
+    required: False
 ---
 generic object: Person
 question: |
   ${x}'s Contact Information
 fields:
   - Home or cell phone number: x.phone_number
+    required: False
   - Work phone number: x.phone_work
     required: False
   - Address: x.address.address
@@ -246,11 +337,11 @@ fields:
 code: |
   change_type = "Living"
 ---
-question: |  
-  When did the change happen?
-fields:
-  - Date of change: date_of_change
-    datatype: date
+continue button field: saw_change_choices
+question: |
+  Change choices
+fields: 
+  code: change_choices
 ---
 question: |
   Sign your letter
