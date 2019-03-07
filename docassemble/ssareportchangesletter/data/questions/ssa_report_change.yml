@@ -23,7 +23,7 @@ imports:
 objects:
   - client: Individual
   - ssa_office: Person
-  - jobs: JobList.using(complete_attribute='value') # Job
+  - jobs: JobList.using(complete_attribute='employer_type') # Job
   - officelist: FieldOfficeList
   - change_details: DADict.using(auto_gather=False, object_type=DAObject, gathered=True)
 ---
@@ -68,6 +68,10 @@ interview help:
     interview. It's important to both keep your password
     secure and not to lose it, because we will not be able
     to retrieve your interview without it.
+---
+code: |
+  jobs[i].is_hourly
+  jobs[i].complete = True
 ---
 field: intro_screen
 question: |
@@ -131,6 +135,9 @@ subquestion: |
   We have found the following offices that are close to your address.
   
   ${map_of([office for office in officelist])}
+  % else:
+  You can use the [Office locator](https://secure.ssa.gov/ICON/main.jsp) to find
+  a Social Security Office near you.
   % endif
 fields:
   - Social Security Office: ssa_office
@@ -144,11 +151,6 @@ fields:
   - note: |
       Choose an office above, or use the [Office locator](https://secure.ssa.gov/ICON/main.jsp)
     show if: found_offices
-  - note: |
-      You can use the [Office locator](https://secure.ssa.gov/ICON/main.jsp)
-    show if:
-      variable: found_offices
-      is: false
   - Office name: ssa_office.name.text
   - Address: ssa_office.address.address
   - Suite: ssa_office.address.unit
@@ -208,6 +210,7 @@ question: |
   What kind of change do you have to report?
 subquestion: |
   Select anything that has changed.
+  Include work for Uber, Lyft, or work for yourself such as odd jobs.
 fields:
   - I started working for an employer: working
     datatype: yesnowide
@@ -233,7 +236,7 @@ code: |
   jobs.there_are_any = working or working_for_self
 ---
 question: |
-  So far you have told us about ${i} jobs.
+  So far you have told us about ${i+1} jobs.
 subquestion: |
   Do you have any other jobs to report?
 yesno: jobs.there_is_another
@@ -266,6 +269,10 @@ fields:
     datatype: currency
     show if: jobs[i].is_hourly
     hint: $/hour
+  - How often do you get paid?: jobs[i].period
+    datatype: integer
+    code: |
+      period_list()
   - I work this many hours every pay check: jobs[i].hours_per_period
     datatype: integer
   - Total (gross) pay each pay period: jobs[i].value
@@ -275,11 +282,7 @@ fields:
     datatype: currency
     show if:
       variable: jobs[i].employer_type
-      is: "me"
-  - How often do you get paid?: jobs[i].period
-    datatype: integer
-    code: |
-      period_list()
+      is: "self"
 ---
 question: |
   How did your household change?
