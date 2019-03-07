@@ -40,7 +40,8 @@ code: |
   if not working and not working_for_self and (changes.true_values().number() < 1) and not other_changes:
     wrong_interview
   else:
-    saw_change_choices
+    if changes.true_values().number() > 0:
+      saw_change_choices
   ssa_office.name.text
   client.ssn
   client.signature
@@ -53,6 +54,11 @@ code: |
 ---
 code: |
   letter_date = today()
+---
+code: |
+  employer_jobs = [job for job in jobs if job.employer_type == 'employer']
+  
+  self_jobs = [job for job in jobs if job.employer_type == 'self']
 ---
 interview help:
   heading: About this interview
@@ -257,6 +263,7 @@ fields:
     show if: 
       variable: jobs[i].employer_type
       is: "employer"
+  - What kind of work do you do for yourself?: jobs[i].self_employment_type      
   - Address of employer: jobs[i].employer_address
     required: False
     address autocomplete: True
@@ -283,6 +290,8 @@ fields:
     show if:
       variable: jobs[i].employer_type
       is: "self"
+  - I have pay stubs for this job.: jobs[i].have_pay_stubs
+    datatype: yesno
 ---
 question: |
   How did your household change?
@@ -338,7 +347,24 @@ fields:
     required: False
 ---
 code: |
-  change_type = "Living"
+  changes_temp = []
+  if working or working_for_self or 'I received assistance to pay for rent or food' in changes:
+    changes_temp.append('income')
+  if 'I moved' in changes or 'I was in jail' in change or 'I was in the hospital' in changes or 'I was in a nursing home' in changes or 'I was outside of the United States for more than 30 days in a row' in changes or 'The number of people in my household changed' in changes or 'My immigration status changed' in changes:
+    changes_temp.append('living situation')
+  if 'I received mony from a lawsuit or lottery winnings' in changes:
+    changes_temp.append('assets')
+  change_type = comma_and_list(changes_temp)
+---
+question: |
+  Add any more details
+subquestion: |
+  You mentioned the following changes: ${changes.true_values()}. If you want to add
+  any more information about any of those changes, you can do so below.  
+fields:
+  - no label: changes_details
+    datatype: area
+    required: false
 ---
 continue button field: saw_change_choices
 question: |
