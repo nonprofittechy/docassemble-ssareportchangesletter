@@ -16,7 +16,7 @@ features:
   javascript: debug.js
 ---
 default screen parts:
-  under: |
+  pre: |
     % if get_config('debug'):
     <div id="qId"></div>
     % endif
@@ -45,17 +45,27 @@ code: |
   letter_date
   intro_screen
   client.name.first
-  changes
+  benefits_type
+  set_changes
+  if working or working_for_self:
+    jobs.gather()
+  # changes
   other_changes
   if not working and not working_for_self and (changes.true_values().number() < 1) and not other_changes:
     wrong_interview
   else:
-    if changes.true_values().number() > 0:
-      saw_change_choices
+    if benefits_type == 'ssi':
+      if changes.true_values().number() > 0:
+        saw_change_choices
   ssa_office.name.text
   client.ssn
   client.signature
   download_form
+---
+code: |
+  if benefits_type == 'ssdi':
+    changes = DAEmpty()
+  set_changes = True
 ---
 code: |
   officelist.load_offices(client.address)
@@ -66,9 +76,12 @@ code: |
   letter_date = today()
 ---
 code: |
-  employer_jobs = [job for job in jobs if job.employer_type == 'employer']
-  
-  self_jobs = [job for job in jobs if job.employer_type == 'self']
+  if working or working_for_self:
+    employer_jobs = [job for job in jobs if job.employer_type == 'employer']
+    self_jobs = [job for job in jobs if job.employer_type == 'self']
+  else:
+    employer_jobs = []
+    self_jobs = []
 ---
 interview help:
   heading: About this interview
@@ -168,7 +181,7 @@ fields:
     none of the above: True
     disable others: True
     object labeler: |
-      lambda y: (y.name.text + ': ' + y.address.on_one_line())
+      lambda y: (y.address.on_one_line())
   - note: |
       Choose an office above, or use the [Office locator](https://secure.ssa.gov/ICON/main.jsp)
     show if: found_offices
@@ -305,7 +318,7 @@ fields:
   - Total (gross) pay each pay period: jobs[i].value
     datatype: currency
     hide if: jobs[i].is_hourly
-  - What kind of deductible expenses do you have for this job?: jobs[i].deductions
+  - What deductible expenses do you have for this job?: jobs[i].deductions
     datatype: currency
     show if:
       variable: jobs[i].employer_type
@@ -373,10 +386,11 @@ code: |
   changes_temp = []
   if working or working_for_self or 'I received assistance to pay for rent or food' in changes:
     changes_temp.append('income')
-  if 'I moved' in changes or 'I was in jail' in change or 'I was in the hospital' in changes or 'I was in a nursing home' in changes or 'I was outside of the United States for more than 30 days in a row' in changes or 'The number of people in my household changed' in changes or 'My immigration status changed' in changes:
-    changes_temp.append('living situation')
-  if 'I received mony from a lawsuit or lottery winnings' in changes:
-    changes_temp.append('assets')
+  if benefits_type == 'ssi':
+    if 'I moved' in changes or 'I was in jail' in change or 'I was in the hospital' in changes or 'I was in a nursing home' in changes or 'I was outside of the United States for more than 30 days in a row' in changes or 'The number of people in my household changed' in changes or 'My immigration status changed' in changes:
+      changes_temp.append('living situation')
+    if 'I received mony from a lawsuit or lottery winnings' in changes:
+      changes_temp.append('assets')
   change_type = comma_and_list(changes_temp)
 ---
 id: details
