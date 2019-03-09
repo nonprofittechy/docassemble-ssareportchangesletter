@@ -12,6 +12,15 @@ metadata:
       organization: Volunteer Lawyer's Project of the Boston Bar Association
   revision_date: 2019-03-02
 ---
+features:
+  javascript: debug.js
+---
+default screen parts:
+  under: |
+    % if get_config('debug'):
+    <div id="qId"></div>
+    % endif
+---
 modules:
   - docassemble.base.util
   - .ssa
@@ -30,6 +39,7 @@ objects:
 comment: |
   http://services6.arcgis.com/zFiipv75rloRP5N4/ArcGIS/rest/services/Office_Points/FeatureServer/1/query?where=&objectIds=&time=&geometry=-96.915919%2C32.693022&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&resultType=none&distance=10&units=esriSRUnit_StatuteMile&returnGeodetic=false&outFields=*&returnGeometry=true&multipatchOption=xyFootprint&maxAllowableOffset=&geometryPrecision=&outSR=4326&datumTransformation=&applyVCSProjection=false&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnExtentOnly=false&returnDistinctValues=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&returnZ=false&returnM=false&returnExceededLimitFeatures=true&quantizationParameters=&sqlFormat=none&f=pgeojson&token=
 ---
+id: order
 mandatory: True
 code: |
   letter_date
@@ -79,6 +89,7 @@ code: |
   jobs[i].is_hourly
   jobs[i].complete = True
 ---
+id: intro screen
 field: intro_screen
 question: |
   We're here to help.
@@ -105,6 +116,7 @@ subquestion: |
   address, and 
   Social Security number.
 ---
+id: change screener
 question: |
   Do you need to report a change to Social Security?
 subquestion: |
@@ -116,6 +128,7 @@ buttons:
   - No: no
   - I'm not sure: unsure
 ---
+id: wrong interview
 event: wrong_interview
 question: |
   It doesn't look like you need this interview.
@@ -126,6 +139,7 @@ buttons:
   Exit: exit
   Restart: restart  
 ---
+id: client name
 question: |
   What is your name?
 fields:
@@ -134,6 +148,7 @@ fields:
     required: False
   - Last name: client.name.last
 ---
+id: which office
 question: |
   What Social Security office do you want to send the letter to?
 subquestion: |
@@ -166,6 +181,7 @@ fields:
     code: |
       states_list()
 ---
+id: client ssn
 question: |
   Social Security Number
 fields:
@@ -203,6 +219,7 @@ script: |
       
     </script>
 ---
+id: benefits type
 question: |
   What kind of Social Security benefits are you receiving?
 field: benefits_type
@@ -212,6 +229,7 @@ choices:
 under: |
   How can I tell?
 ---
+id: change type
 question: |
   What kind of change do you have to report?
 subquestion: |
@@ -241,12 +259,14 @@ fields:
 code: |
   jobs.there_are_any = working or working_for_self
 ---
+id: job is there another
 question: |
   So far you have told us about ${i+1} jobs.
 subquestion: |
   Do you have any other jobs to report?
 yesno: jobs.there_is_another
 ---
+id: job details
 question: | 
   Tell me about the ${ ordinal(i) } job you need to report.
 subquestion: |
@@ -293,6 +313,7 @@ fields:
   - I have pay stubs for this job.: jobs[i].have_pay_stubs
     datatype: yesno
 ---
+id: household change details
 question: |
   How did your household change?
 fields:
@@ -319,6 +340,7 @@ code: |
     })
   change_choices = changes_temp
 ---
+id: other changes
 question: |
   Is there anything else that you would like to report to Social Security?
 fields:
@@ -326,6 +348,7 @@ fields:
     datatype: area
     required: False
 ---
+id: contact info
 generic object: Person
 question: |
   ${x}'s Contact Information
@@ -356,6 +379,7 @@ code: |
     changes_temp.append('assets')
   change_type = comma_and_list(changes_temp)
 ---
+id: details
 question: |
   Add any more details
 subquestion: |
@@ -366,18 +390,21 @@ fields:
     datatype: area
     required: false
 ---
+id: changes details
 continue button field: saw_change_choices
 question: |
-  Change choices
+  When did the changes take place?
 fields: 
   code: change_choices
 ---
+id: signature
 question: |
   Sign your letter
 signature: client.signature
 under: |
   ${client}
 ---
+id: download form
 event: download_form
 question: |
   Here is your document.
