@@ -43,9 +43,9 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 setup(name='docassemble.ssareportchangesletter',
-      version='0.0.8',
+      version='0.0.11',
       description=('An interview to help an SSI or SSDI recipient report changes to the Social Security Administration'),
-      long_description=u'# docassemble.ssareportchangesletter\r\n\r\nAn interview to help an SSI or SSDI recipient report changes to the Social Security Administration\r\n\r\n## Author\r\n\r\nQuinten Steenhuis, qsteenhuis@gmail.com\r\n\r\n## Changelog\r\n\r\n* 2019-03-06 Work on question order and commpleting letter\r\n* 2019-02-26 Use SSA API to list nearby offices',
+      long_description='# docassemble.ssareportchangesletter\r\n\r\nAn interview to help an SSI or SSDI recipient report changes to the Social Security Administration\r\n\r\n## Author\r\n\r\nQuinten Steenhuis, qsteenhuis@gmail.com\r\n\r\n## Changelog\r\n* 2019-08-18 Add section headings to record of dedicated account\r\n* 2019-03-23 Include the Record of dedicated account\r\n* 2019-03-06 Work on question order and commpleting letter\r\n* 2019-02-26 Use SSA API to list nearby offices',
       long_description_content_type='text/markdown',
       author='Quinten Steenhuis',
       author_email='qsteenhuis@gmail.com',
