@@ -7,6 +7,7 @@ An interview to help an SSI or SSDI recipient report changes to the Social Secur
 Quinten Steenhuis, qsteenhuis@gmail.com
 
 ## Changelog
+* 2019-08-20 Reorganize question order to be more logical, add review/edit ledgers, separate deposits and withdrawals
 * 2019-08-18 Add section headings to record of dedicated account
 * 2019-03-23 Include the Record of dedicated account
 * 2019-03-06 Work on question order and commpleting letter

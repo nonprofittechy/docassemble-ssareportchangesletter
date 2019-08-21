@@ -21,8 +21,10 @@ features:
 objects:
   - client: Individual
   - rep_payee: Individual
+  # unused
   - benefits_expenditures: ValueList.using(there_are_any=True)
   - dedicated_account: Ledger
+  - dedicated_account_deposits: Ledger
 ---
 sections:
   - intro: Introduction
@@ -42,15 +44,19 @@ code: |
     show_ledgers
   client.name.first
   rep_payee.name.first
+  rep_payee.relationship
+  had_felony
   dedicated_account_deposits
   # added_benefits
+  dedicated_account_deposits.gather()
   dedicated_account.gather()
+  review_account
   gather_receipts
   # final_report  
   pdf_report
----
-code: |
-  dedicated_account.there_are_any = deposited_into_dedicated_account or withdrew_money_from_dedicated_account 
+#---
+#code: |
+#  dedicated_account.there_are_any = deposited_into_dedicated_account or withdrew_money_from_dedicated_account 
 ---
 code: |
   # int_path = 'docassemble.ssareportchangesletter'
@@ -65,13 +71,12 @@ subquestion: |
   This interview helps you fill out a Report of Benefits
   and Dedicated Account.
   
-  It will ask questions about you and your spending over
+  We will ask questions about you and your spending over
   the last year, and information about the person who is
   getting Social Security Benefits.
-  
-  We will ask you about two kinds of accounts: regular
-  benefits you received in the last year, and any money
-  that went into a dedicated account.
+
+  You only need to report information about money you spent
+  or added to a "dedicated spending account".
   
   You will need to have the form that Social Security sent
   you to fill out, and receipts and bank statements
@@ -93,6 +98,18 @@ subquestion: |
 #  Answer yes if you spent any money or added any money after the last report you sent
 #  Social Security.
 # yesno: dedicated_account.there_are_any
+---
+section: spending
+question: |
+  List each **deposit** you made
+  into the dedicated account since your last report to SSA
+list collect: True  
+fields:
+  - Date: dedicated_account_deposits[i].date
+    datatype: date
+  - Amount: dedicated_account_deposits[i].value
+    datatype: currency
+  - Description: dedicated_account_deposits[i].description
 ---
 section: spending
 question: |
@@ -284,17 +301,20 @@ subquestion: |
   Start by telling us how much money was in the account as of your last report to SSA.
   You can copy this off of the form that the Social Security Administration sent you.
   
-  Take a look at boxes 6 and 7 for this question.
+  Take a look at the amounts written in box 6 for this question.
+
+  [CENTER]
+  [FILE box_6.png]
 fields:
-  - Past due SSI benefits deposited by SSA in dedicated account: dedicated_account_deposits
+  - Past due SSI benefits deposited by SSA in dedicated account: report_dedicated_account_deposits
     datatype: currency
-  - Balance in dedicated account as you reported on a prior report: dedicated_account_prior_report_balance
+  - Balance in dedicated account as you reported on a prior report: report_dedicated_account_prior_report_balance
     datatype: currency
-  - What is the _current_ balance in the dedicated account?: dedicated_account_current_balance
+  - Total dedicated account balance: report_dedicated_account_total_balance
     datatype: currency
-  - Did you deposit any money into the account between ${date_from} and ${date_to}?: deposited_into_dedicated_account
+  - Did you deposit any money into the account between ${date_from} and ${date_to}?: dedicated_account_deposits.there_are_any
     datatype: yesnoradio
-  - Did you take any money out of the dedicated account between ${date_from} and ${date_to}?: withdrew_money_from_dedicated_account 
+  - Did you take any money out of the dedicated account between ${date_from} and ${date_to}?: dedicated_account.there_are_any
     datatype: yesnoradio
 #---
 #section: signature
@@ -360,6 +380,59 @@ fields:
     datatype: camera
     maximum image size: 350
 ---
+table: dedicated_account.table
+rows: dedicated_account
+columns:
+  - Date: |
+      row_item.date
+  - Amount: |
+      currency(row_item.amount())
+  - Description: |
+      row_item.description
+edit:
+  - value
+---
+table: dedicated_account_deposits.table
+rows: dedicated_account_deposits
+columns:
+  - Date: |
+      row_item.date
+  - Amount: |
+      currency(row_item.amount())
+  - Description: |
+      row_item.description
+edit:
+  - value
+---
+reconsider: True
+code: |
+  dedicated_account.calculate()
+  dedicated_account_deposits.calculate()
+  calculated_ledger = True
+---
+need: calculated_ledger
+id: review account
+field: review_account
+section: spending
+question: |
+  Review your dedicated account entries
+subquestion: |
+  So far, it looks like you deposited ${currency(dedicated_account_deposits.total())}
+  since your last report to SSA and withdrew ${currency(dedicated_account.total())},
+  which means the current balance should be **${currency(Decimal(report_dedicated_account_total_balance) + Decimal(dedicated_account_deposits.total()) - Decimal(dedicated_account.total()) )}**
+
+  If that doesn't look right, make any changes needed below.
+
+  ### Deposits
+  ${dedicated_account_deposits.table}
+  ${dedicated_account_deposits.add_action()}
+
+  ### Withdrawals
+  ${dedicated_account.table}
+  ${dedicated_account.add_action()}
+
+
+---
 section: download_report
 event: pdf_report
 question: |
@@ -367,6 +440,21 @@ question: |
   
 subquestion: |
   ${ssa_6233}
+---
+code: |
+  details = ""
+  for entry in dedicated_account_deposits:
+    details += "\r\n"
+    details += format_date(entry.date) + " " + currency(entry.amount()) + " " + '(' + entry.description + ')'
+  DaDepositDetails = details
+---
+code: |
+  details = ""
+  for entry in dedicated_account:
+    details += "\r\n"
+    details += "\r\n"
+    details += format_date(entry.date) + " " + currency(entry.amount()) + " " + '(' + entry.description + ')'
+  DaWithdrawalsDetails = details
 ---
 attachment:
   - variable name: ssa_6233
@@ -387,32 +475,32 @@ attachment:
       #- "BenefitsPaid": ${
       #- "BenefitsPriorYears": something
       # - "TotalAccountableAmount": something
-      - "PayeeChoseSpendingYes": ${payee_chose_spending}
-      - "PayeeChoseSpendingNo": ${not payee_chose_spending}
-      - "WhoDecidedExplanation": ${who_decided_explanation if who_decided_how_spent != 'me' else ''}
-      - "AmountSpentFoodHousing": something
-      - "AmountSpentOther": something
-      - "HowMetNeedsExplanation": ${how_met_needs_explanation}
-      - "AmountSaved": something
-      - "AccountTypeSavings": ${account_types['savings']}
-      - "AccountTypeBond": ${account_types['savings bonds']}
-      - "AccountTypeCd": ${account_types['cd']}
-      - "AccountTypeCollectiveSavings": ${account_types['collective']}
-      - "AccountTypeOther": ${account_types['other']}
-      - "TitleBeneficiaryBy": ${account_owners['beneficiary by rep']}
-      - "TitlePayeeFor": ${account_owners['rep for beneficiary']}
-      - "TitleOther": ${account_owners['other']}
-      - "AccountTypesOther": ${account_types['other']}
-      - "AccountTypesOtherTitle": something
+      #- "PayeeChoseSpendingYes": ${payee_chose_spending}
+      #- "PayeeChoseSpendingNo": ${not payee_chose_spending}
+      #- "WhoDecidedExplanation": ${who_decided_explanation if who_decided_how_spent != 'me' else ''}
+      #- "AmountSpentFoodHousing": something
+      #- "AmountSpentOther": something
+      # - "HowMetNeedsExplanation": ${how_met_needs_explanation}
+      #- "AmountSaved": something
+      #- "AccountTypeSavings": ${account_types['savings']}
+      #- "AccountTypeBond": ${account_types['savings bonds']}
+      #- "AccountTypeCd": ${account_types['cd']}
+      #- "AccountTypeCollectiveSavings": ${account_types['collective']}
+      #- "AccountTypeOther": ${account_types['other']}
+      #- "TitleBeneficiaryBy": ${account_owners['beneficiary by rep']}
+      #- "TitlePayeeFor": ${account_owners['rep for beneficiary']}
+      #- "TitleOther": ${account_owners['other']}
+      #- "AccountTypesOther": ${account_types['other']}
+      #- "AccountTypesOtherTitle": something
       - "DedicatedAccountDeposits": something
       - "DedicatedAccountPriorReportBalance": something
       - "DedicatedAccountTotalBalance": something
-      - "DepositedIntoDedicatedAccountNo": ${not deposited_into_dedicated_account}
-      - "DepositedIntoDedicatedAccountYes": ${deposited_into_dedicated_account}
-      - "DaDepositsDetails": something
-      - "WithdrewMoneyFromDedicatedAccountYes": ${withdrew_money_from_dedicated_account}
-      - "WithdrewMoneyFromDedicatedAccountNo": ${not withdrew_money_from_dedicated_account}
-      - "DaWithdrawalsDetails": something
+      - "DepositedIntoDedicatedAccountNo": ${not dedicated_account_deposits.there_are_any}
+      - "DepositedIntoDedicatedAccountYes": ${dedicated_account_deposits.there_are_any}
+      - "DaDepositsDetails": ${DaDepositDetails}
+      - "WithdrewMoneyFromDedicatedAccountYes": ${dedicated_account.there_are_any}
+      - "WithdrewMoneyFromDedicatedAccountNo": ${not dedicated_account.there_are_any}
+      - "DaWithdrawalsDetails": ${DaWithdrawalsDetails}
       - "DaUsedForMedicalEducationOrTrainingYes": No
       - "DaUsedForMedicalEducationOrTrainingNo": No
       - "DaWithdrawalsHowUsed": something
