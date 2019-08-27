@@ -15,6 +15,7 @@ include:
 features:
   javascript: 
     - ssa.js
+    - phone.js
   navigation: True
   progress bar: True
 ---
@@ -37,11 +38,12 @@ sections:
   - download_report: Download report
 ---
 id: order
+scan for variables: False
 mandatory: True
 code: |
   intro_screen
   if len(ledger_interviews) > 0: # Check for existing ledgers from past sessions
-    show_ledgers
+    skip_ledger
   client.name.first
   rep_payee.name.first
   rep_payee.relationship
@@ -50,6 +52,8 @@ code: |
   # added_benefits
   dedicated_account_deposits.gather()
   dedicated_account.gather()
+  if not used_for_valid_purpose:
+    how_spending_benefited_client
   review_account
   gather_receipts
   # final_report  
@@ -62,14 +66,24 @@ code: |
   # int_path = 'docassemble.ssareportchangesletter'
   int_path = 'docassemble.playground7'
   ledger_interviews = interview_list(filename=int_path + ':ssa_dedicated_account_ledger.yml')
+  ledger_choices_temp = []
+  for index, ledger in enumerate(ledger_interviews):
+    ledger_choices_temp.append({index: ledger.get('session')})
+  ledger_choices = ledger_choices_temp
 ---
 id: intro screen
 section: intro
 question: |
-  Welcome
+  Rep Payee's Report of Dedicated Account
+decoration: table
 subquestion: |
   This interview helps you fill out a Report of Benefits
-  and Dedicated Account.
+  and Dedicated Account. You can use this to complete the information
+  that would be in the printed form Social Security may have already
+  sent you. That form looks like this:
+
+  [CENTER]
+  [FILE form_preview.png]
   
   We will ask questions about you and your spending over
   the last year, and information about the person who is
@@ -83,13 +97,42 @@ subquestion: |
   from the last year.
 field: intro_screen  
 ---
-field: show_ledgers
+id: previous ledgers
 question: |
   You have a saved ledger
 subquestion: |
-  % for ledger in ledger_interviews:
-  * ${ledger.get('modtime')}
-  % endfor
+  It looks like you have used this web page to track your spending
+  throughout the year. You have ${len(ledger_interviews)} saved reports. 
+  Well done!
+
+  You can copy information from your saved ledger into this report.
+fields:
+  - Choose a saved ledger to use in this report: old_ledger
+    input type: radio
+    code: ledger_choices
+    show if: 
+      variable: skip_ledger
+      is: False
+
+  - Skip the saved ledger: skip_ledger
+    datatype: yesno
+    default: False
+---
+question: |
+  What is your address?
+fields:
+  - address: rep_payee.address.address
+    address autocomplete: True
+  - unit: rep_payee.address.unit
+    required: False
+  - city: rep_payee.address.city
+  - state: rep_payee.address.state
+    code: |
+      states_list()
+    default: "MA"
+  - zip: rep_payee.address.zip
+  - What is your phone number?: rep_payee.phone_number
+    datatype: tel
 #---
 #question: |
 #  Did you put any money in or take any money out of your dedicated account in the
@@ -99,6 +142,7 @@ subquestion: |
 #  Social Security.
 # yesno: dedicated_account.there_are_any
 ---
+id: deposits
 section: spending
 question: |
   List each **deposit** you made
@@ -111,10 +155,11 @@ fields:
     datatype: currency
   - Description: dedicated_account_deposits[i].description
 ---
+id: withdrawals
 section: spending
 question: |
-  List each purchase you made since your last report to SSA
-  using money from the dedicated account
+  List each **purchase** you made using money from the dedicated
+  account since your last report to SSA
 list collect: True  
 fields:
   - Date: dedicated_account[i].date
@@ -131,12 +176,25 @@ fields:
       - Job skills: job skills training
       - Something else: other
 ---
-section: rep_info
-question: |
-  Phone number
-fields:
-  - What is your phone number?: rep_payee.phone_number
+reconsider: True
+comment: |
+  Make sure all of the withdrawals were used for a valid purpose
+code: |
+  temp_used_for_valid_purpose = True
+  for entry in dedicated_account:
+    temp_used_for_valid_purpose &= not set(entry.purpose).isdisjoint(['medical treatment','education','job skills training'])
+  used_for_valid_purpose = temp_used_for_valid_purpose
 ---
+question: |
+  How did the money benefit ${client}?
+subquestion: |
+  You said that some of the money you spent was _not_ spent
+  for either medical expenses, education, or training.
+fields:
+  - How did your spending benefit ${client} and how were they related to ${client}'s disability?: how_spending_benefited_client
+    datatype: area  
+---
+id: receipts
 section: receipts
 continue button field: identify_receipts
 question: |
@@ -156,6 +214,7 @@ code: |
     rec.receipt
   gather_receipts = True
 ---
+id: rep payee name
 section: rep_info
 question: |
   What is your name?
@@ -165,6 +224,7 @@ fields:
     required: False
   - Last name: rep_payee.name.last
 ---
+id: recipient name
 section: recipient_info
 question: |
   Who is getting the Social Security Benefits?
@@ -204,9 +264,12 @@ fields:
     show if: had_felony
   - ${client} moved or is living with someone else.: client_moved
     datatype: yesno
-  - Please explain: client_moved_explanation
+  - Please explain why ${client} moved: client_moved_explanation
     datatype: area
     show if: client_moved
+---
+code: |
+  client_moved_explanation_and_address = client_moved_explanation + "\r\n" + client.address.full()
 ---
 id: benefits paid and saved
 section: spending
@@ -291,6 +354,7 @@ fields:
       variable: account_owners
       is: "other"
 ---
+id: starting balances
 section: spending
 question: |
   Dedicated Account
@@ -316,11 +380,6 @@ fields:
     datatype: yesnoradio
   - Did you take any money out of the dedicated account between ${date_from} and ${date_to}?: dedicated_account.there_are_any
     datatype: yesnoradio
-#---
-#section: signature
-#question: |
-#  Signature
-#signature: rep_payee.signature
 ---
 section: rep_info
 question: |
@@ -330,21 +389,23 @@ fields:
     input type: radio
     choices:
       - Parent
-      - Sibling
+      - Grandparent
+      - Sibling of ${client.possessive('Parent')}
+      - Sibling of ${client}
       - Cousin
-      - Sibling of Parent
       - Friend
-      - Employee of agency: employee
+      - Paid representative (from an agency or company): employee of an agency
       - Other: other
   - What is your title?: rep_payee.title
     show if:
       variable: rep_payee.relationship
-      is: "employee"
-  - Explain your relationship: rep_payee.relationship
+      is: "employee of an agency"
+  - How are you related?: rep_payee.relationship
     show if:
       variable: rep_payee.relationship
       is: "other"
 ---
+id: regular spending
 section: spending
 question: |
   Money spent between ${date_from} and ${date_to} from ${client.possessive('regular monthly benefits')}.
@@ -369,6 +430,7 @@ fields:
       variable: benefits_spending_entry_type
       is: "totals"      
 ---
+id: receipt
 section: receipt_entry
 question: |
   Purchase of ${currency(dedicated_account[i].amount())} on ${dedicated_account[i].date}
@@ -433,13 +495,19 @@ subquestion: |
 
 
 ---
+need: calculated_ledger
 section: download_report
 event: pdf_report
 question: |
   Your download is ready
   
 subquestion: |
+  ### Main form
   ${ssa_6233}
+
+  ### Appendix
+  ${pdf_concatenate(ssa_6233_appendix)}
+
 ---
 code: |
   details = ""
@@ -455,6 +523,11 @@ code: |
     details += "\r\n"
     details += format_date(entry.date) + " " + currency(entry.amount()) + " " + '(' + entry.description + ')'
   DaWithdrawalsDetails = details
+---
+attachment: 
+  - variable name: ssa_6233_appendix
+    filename: ssa_6233_appendix
+    docx template file: dedicated_account_appendix.docx
 ---
 attachment:
   - variable name: ssa_6233
@@ -492,19 +565,19 @@ attachment:
       #- "TitleOther": ${account_owners['other']}
       #- "AccountTypesOther": ${account_types['other']}
       #- "AccountTypesOtherTitle": something
-      - "DedicatedAccountDeposits": something
-      - "DedicatedAccountPriorReportBalance": something
-      - "DedicatedAccountTotalBalance": something
+      - "DedicatedAccountDeposits": ${report_dedicated_account_deposits}
+      - "DedicatedAccountPriorReportBalance": ${report_dedicated_account_prior_report_balance}
+      - "DedicatedAccountTotalBalance": ${report_dedicated_account_total_balance}
       - "DepositedIntoDedicatedAccountNo": ${not dedicated_account_deposits.there_are_any}
       - "DepositedIntoDedicatedAccountYes": ${dedicated_account_deposits.there_are_any}
       - "DaDepositsDetails": ${DaDepositDetails}
       - "WithdrewMoneyFromDedicatedAccountYes": ${dedicated_account.there_are_any}
       - "WithdrewMoneyFromDedicatedAccountNo": ${not dedicated_account.there_are_any}
       - "DaWithdrawalsDetails": ${DaWithdrawalsDetails}
-      - "DaUsedForMedicalEducationOrTrainingYes": No
-      - "DaUsedForMedicalEducationOrTrainingNo": No
-      - "DaWithdrawalsHowUsed": something
-      - "DedicatedAccountBalance": something
+      - "DaUsedForMedicalEducationOrTrainingYes": ${used_for_valid_purpose}
+      - "DaUsedForMedicalEducationOrTrainingNo": ${not used_for_valid_purpose}
+      - "DaWithdrawalsHowUsed": ${'' if used_for_valid_purpose else how_spending_benefited_client}
+      - "DedicatedAccountBalance": ${ currency(Decimal(report_dedicated_account_total_balance) + Decimal(dedicated_account_deposits.total()) - Decimal(dedicated_account.total()) ) }
       - "RepPayeeSignature": ${ rep_payee.signature }
       - "SignatureDate": ${today()}
       - "PhoneNumber": ${rep_payee.phone_number}
@@ -549,12 +622,3 @@ subquestion: |
   * Current balance ${currency(dedicated_account_current_balance)}
 
   ${rep_payee.address_block()}
-  
-
-
-
-
-
-
-
-  
