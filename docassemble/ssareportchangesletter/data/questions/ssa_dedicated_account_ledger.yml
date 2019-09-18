@@ -1,0 +1,178 @@
+---
+metadata:
+  title: Dedicated Account Ledger
+---
+modules:
+  - docassemble.income.income
+---
+include:
+  - docassemble.gbls:basic-questions-gbls.yml
+  - docassemble.ssa:ssa.yml
+---
+features:
+  javascript: 
+    - ssa.js
+---
+objects:
+  - client: Individual
+  - rep_payee: Individual
+  - dedicated_account_ledger: Ledger.using(there_are_any=True, complete_attribute='value', there_is_another=False)
+---
+features:
+  navigation: True
+---
+sections:
+  - intro: Introduction
+  - add_entry: Add a purchase
+  - review_ledger: Review your purchases
+  - personal_info: Information about you
+  - download: Download
+progressive: False
+---
+id: order
+mandatory: True
+code: |
+  intro
+  dedicated_account_ledger[0].value
+  review_ledger
+---
+reconsider: True
+code: |
+  dedicated_account_ledger.calculate()
+  calculated_ledger = True
+---
+id: intro screen
+event: intro
+question: |
+  Dedicated Account Ledger
+subquestion: |
+  This is a tool that helps you track your spending from a
+  dedicated account over the course of the year. Use this tool
+  so you are ready when SSA asks you to report your spending.
+
+  % if len(dedicated_account_ledger) > 0:
+  So far you've recorded ${len(dedicated_account_ledger) } 
+  ${ quantity_noun(len(dedicated_account_ledger), 'transaction')}.
+  % endif
+  
+  ${dedicated_account_ledger.add_action()}
+
+  ${interview_url_as_qr()}
+---
+event: add_entry
+question: |
+  Add an item
+subquestion: |
+  Before you buy something, you should consider getting pre-approval from
+  the Social Security administration.
+  
+  Current account balance: ${currency(dedicated_account_ledger.total()) }
+  
+  ${dedicated_account_ledger.add_action()}
+section: add_entry
+---
+need: calculated_ledger
+event: review_ledger
+question: |
+  Review
+subquestion: |
+  ${dedicated_account_ledger.table}
+  **Current balance:** ${currency(dedicated_account_ledger.total())}
+
+  ${dedicated_account_ledger.add_action()}
+section: review_ledger  
+---
+need: calculated_ledger
+event: download
+question: |
+  Download your ledger
+subquestion: |
+  ${ account_ledger }
+section: download
+---
+table: dedicated_account_ledger.table
+rows: dedicated_account_ledger
+columns:
+  - Date: |
+      row_item.date
+  - Amount: |
+      currency(row_item.amount())
+  - Running total: |
+      currency(row_item.running_total)
+  - Description: |
+      row_item.description
+edit:
+  - value
+---
+question: |
+  Starting balance
+subquestion: |
+  What was the balance in your account at the beginning of the year?
+fields:
+  - Date: dedicated_account_ledger[0].date
+    datatype: date
+  - Starting balance: dedicated_account_ledger[0].value
+    datatype: currency
+  - Description:  dedicated_account_ledger[0].description
+    choices:
+      - Original balance: original
+      - Balance as of last report: last_report
+---
+question: |
+  Add a transaction
+fields:
+  - Is this a deposit or a withdrawal?: dedicated_account_ledger[i].transaction_type
+    input type: radio
+    choices:
+      - Withdrawal: expense
+      - Deposit: income
+  - Date: dedicated_account_ledger[i].date
+    datatype: date
+  - Amount: dedicated_account_ledger[i].value
+    datatype: currency
+    min: 0
+  - Description: dedicated_account_ledger[i].description
+  - Purpose: dedicated_account_ledger[i].purpose
+    show if:
+      variable: dedicated_account_ledger[i].transaction_type
+      is: 'expense'
+    choices:
+      - Medical treatment: medical treatment
+      - Education: education
+      - Job skills: job skills training
+      - Something else: other
+  - How did the purchase benefit the person who the benefits are for?: dedicated_account_ledger[i].purpose_details
+    show if:
+      variable: dedicated_account_ledger[i].purpose
+      is: 'other'
+  - Was this transaction pre-approved by Social Security?: dedicated_account_ledger[i].pre_approved
+    datatype: yesnoradio
+    show if:
+      variable: dedicated_account_ledger[i].transaction_type
+      is: 'expense'
+  - Who did you talk to, and how did they approve it?: dedicated_account_ledger[i].pre_approval_details
+    datatype: area
+    show if: dedicated_account_ledger[i].pre_approved
+  - Add a receipt for this transaction?: dedicated_account_ledger[i].has_receipt
+    show if:
+      variable: dedicated_account_ledger[i].transaction_type
+      is: 'expense'  
+    datatype: yesno
+  - Receipt: dedicated_account_ledger[i].receipt
+    show if: dedicated_account_ledger[i].has_receipt
+    datatype: camera
+    maximum image size: 100
+    image upload type: jpeg
+---
+event: the_end
+question: The end
+---
+reconsider: True
+attachment:
+  name: Dedicated Account Ledger
+  filename: DedicatedAccountLedger
+  variable name: account_ledger
+  docx template file: DedicatedAccountRecord.docx
+  valid formats:
+    - pdf
+    - docx
