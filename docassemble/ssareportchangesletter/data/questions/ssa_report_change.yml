@@ -10,21 +10,20 @@ metadata:
   authors:
     - name: Quinten Steenhuis
       organization: Volunteer Lawyer's Project of the Boston Bar Association
-  revision_date: 2019-03-02
----
-features:
-  javascript: debug.js
----
-default screen parts:
-  pre: |
-    % if get_config('debug'):
-    <div id="qId"></div>
-    % endif
+  revision_date: 2019-09-21
 ---
 modules:
   - docassemble.base.util
-  - .ssa
+  - docassemble.ssa.ssa
   - docassemble.income.income
+---
+include:
+  - docassemble.ssa:ssa.yml
+---
+features:
+  javascript: 
+    - ssa.js
+    - phone.js    
 ---
 imports:
   - jinja2.utils
@@ -199,6 +198,7 @@ question: |
   Social Security Number
 fields:
   - What is your Social Security Number?: client.ssn
+    datatype: ssn
     validate: is_valid_ssn
 under: |
   {Why} do we need this?
@@ -206,31 +206,6 @@ terms:
   - Why: |
       The Social Security Administration needs this number in order to 
       apply the new information to your account.
-script: |
-    <script type="text/javascript">
-      document.getElementById(btoa('client.ssn')).onkeyup = function() {
-      var val = this.value.replace(/\D/g, '');
-      var newVal = '';
-
-      if(val.length > 4) {
-        this.value = val;
-      }
-
-      if((val.length > 3) && (val.length < 6)) {
-        newVal += val.substr(0, 3) + '-';
-        val = val.substr(3);
-      }
-
-      if (val.length > 5) {
-        newVal += val.substr(0, 3) + '-';
-        newVal += val.substr(3, 2) + '-';
-        val = val.substr(5);
-      }
-      newVal += val;
-      this.value = newVal.substring(0, 11);
-      };    
-      
-    </script>
 ---
 id: benefits type
 question: |
@@ -367,8 +342,10 @@ question: |
   ${x}'s Contact Information
 fields:
   - Home or cell phone number: x.phone_number
+    datatype: tel  
     required: False
   - Work phone number: x.phone_work
+    datatype: tel  
     required: False
   - Address: x.address.address
     address autocomplete: True

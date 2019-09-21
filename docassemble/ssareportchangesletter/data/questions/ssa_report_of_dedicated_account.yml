@@ -149,7 +149,7 @@ question: |
   into the dedicated account since your last report to SSA
 list collect: True  
 fields:
-  - Date: dedicated_account_deposits[i].date
+  - Date of deposit: dedicated_account_deposits[i].date
     datatype: date
   - Amount: dedicated_account_deposits[i].value
     datatype: currency
@@ -162,7 +162,7 @@ question: |
   account since your last report to SSA
 list collect: True  
 fields:
-  - Date: dedicated_account[i].date
+  - Date of purchase: dedicated_account[i].date
     datatype: date
   - Amount: dedicated_account[i].value
     datatype: currency
@@ -532,7 +532,7 @@ attachment:
 attachment:
   - variable name: ssa_6233
     filename: ssa_6233
-    pdf template file: SSA-6233-dedicated_account_record.pdf
+    pdf template file: SSA-6233-dedicated_account_record_2.pdf
     fields:
       - "DateFrom": ${date_from}
       - "DateTo": ${date_to}
@@ -565,9 +565,9 @@ attachment:
       #- "TitleOther": ${account_owners['other']}
       #- "AccountTypesOther": ${account_types['other']}
       #- "AccountTypesOtherTitle": something
-      - "DedicatedAccountDeposits": ${report_dedicated_account_deposits}
-      - "DedicatedAccountPriorReportBalance": ${report_dedicated_account_prior_report_balance}
-      - "DedicatedAccountTotalBalance": ${report_dedicated_account_total_balance}
+      - "DedicatedAccountDeposits": ${currency(report_dedicated_account_deposits)}
+      - "DedicatedAccountPriorReportBalance": ${currency(report_dedicated_account_prior_report_balance)}
+      - "DedicatedAccountTotalBalance": ${currency(report_dedicated_account_total_balance)}
       - "DepositedIntoDedicatedAccountNo": ${not dedicated_account_deposits.there_are_any}
       - "DepositedIntoDedicatedAccountYes": ${dedicated_account_deposits.there_are_any}
       - "DaDepositsDetails": ${DaDepositDetails}
@@ -581,7 +581,7 @@ attachment:
       - "RepPayeeSignature": ${ rep_payee.signature }
       - "SignatureDate": ${today()}
       - "PhoneNumber": ${rep_payee.phone_number}
-      - "RepPayeeRelationship": ${rep_payee.relationship}    
+      - "RepPayeeRelationship": ${rep_payee.relationship}
 ---
 event: final_report
 question: |
