@@ -7,6 +7,7 @@ An interview to help an SSI or SSDI recipient report changes to the Social Secur
 Quinten Steenhuis, qsteenhuis@gmail.com
 
 ## Changelog
+* 2020-12-04 Upgrade for newest docassemble version
 * 2019-09-21 Cleanup / integrate ssn + tel auto-input validation
 * 2019-08-26 Add phone number auto-format, complete template variable mapping
 * 2019-08-20 Reorganize question order to be more logical, add review/edit ledgers, separate deposits and withdrawals

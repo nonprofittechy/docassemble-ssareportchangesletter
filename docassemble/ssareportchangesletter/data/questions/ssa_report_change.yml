@@ -30,6 +30,14 @@ features:
 imports:
   - jinja2.utils
 ---
+default screen parts:
+  under: |
+    Feedback, suggestions, or comments? [Complete this survey](${ interview_url(i="docassemble.ssioverpaymentwaiver:feedback.yml", github_repo="docassemble-ssareportchangesletter", github_user='nonprofittechy', variable=user_info().variable, question_id=user_info().question_id, local=False,reset=1)} ){:target="_blank"}.
+  pre: |
+    % if get_config('debug'):
+    `Page id: ${ user_info().question_id }`
+    % endif  
+---
 objects:
   - client: Individual
   - ssa_office: Person
@@ -38,6 +46,8 @@ objects:
   - change_details: DADict.using(auto_gather=False, object_type=DAObject, gathered=True)
 ---
 comment: |
+  Test URL for SSA offices:
+  
   http://services6.arcgis.com/zFiipv75rloRP5N4/ArcGIS/rest/services/Office_Points/FeatureServer/1/query?where=&objectIds=&time=&geometry=-96.915919%2C32.693022&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&resultType=none&distance=10&units=esriSRUnit_StatuteMile&returnGeodetic=false&outFields=*&returnGeometry=true&multipatchOption=xyFootprint&maxAllowableOffset=&geometryPrecision=&outSR=4326&datumTransformation=&applyVCSProjection=false&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnExtentOnly=false&returnDistinctValues=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&returnZ=false&returnM=false&returnExceededLimitFeatures=true&quantizationParameters=&sqlFormat=none&f=pgeojson&token=
 ---
 id: order
@@ -375,8 +385,9 @@ fields:
     code: |
       states_list()
   - Zip code: x.address.zip
-  - County: x.address.county
     required: False
+  #- County: x.address.county
+  #  required: False
 ---
 code: |
   changes_temp = []

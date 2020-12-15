@@ -19,6 +19,14 @@ features:
   navigation: True
   progress bar: True
 ---
+default screen parts:
+  under: |
+    Feedback, suggestions, or comments? [Complete this survey](${ interview_url(i="docassemble.ssioverpaymentwaiver:feedback.yml", github_repo="docassemble-ssareportchangesletter", github_user='nonprofittechy', variable=user_info().variable, question_id=user_info().question_id, local=False,reset=1)} ){:target="_blank"}.
+  pre: |
+    % if get_config('debug'):
+    `Page id: ${ user_info().question_id }`
+    % endif  
+---
 objects:
   - client: Individual
   - rep_payee: Individual
