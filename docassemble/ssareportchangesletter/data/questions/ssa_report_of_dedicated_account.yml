@@ -65,7 +65,7 @@ code: |
 code: |
   # int_path = 'docassemble.ssareportchangesletter'
   int_path = 'docassemble.playground7'
-  ledger_interviews = interview_list(filename=int_path + ':ssa_dedicated_account_ledger.yml')
+  ledger_interviews = interview_list(filename=int_path + ':ssa_dedicated_account_ledger.yml')[0]
   ledger_choices_temp = []
   for index, ledger in enumerate(ledger_interviews):
     ledger_choices_temp.append({index: ledger.get('session')})
@@ -532,7 +532,7 @@ attachment:
 attachment:
   - variable name: ssa_6233
     filename: ssa_6233
-    pdf template file: SSA-6233-dedicated_account_record_2.pdf
+    pdf template file: SSA-6233-dedicated_account_record.pdf
     fields:
       - "DateFrom": ${date_from}
       - "DateTo": ${date_to}
