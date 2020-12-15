@@ -126,6 +126,7 @@ fields:
     datatype: yesno
     default: False
 ---
+id: address
 question: |
   What is your address?
 fields:
@@ -193,6 +194,7 @@ code: |
     temp_used_for_valid_purpose &= not set(entry.purpose).isdisjoint(['medical treatment','education','job skills training'])
   used_for_valid_purpose = temp_used_for_valid_purpose
 ---
+id: benefit
 question: |
   How did the money benefit ${client}?
 subquestion: |
@@ -389,6 +391,7 @@ fields:
   - Did you take any money out of the dedicated account between ${date_from} and ${date_to}?: dedicated_account.there_are_any
     datatype: yesnoradio
 ---
+id: relationship to recipient
 section: rep_info
 question: |
   Information about your relationship with ${client}
@@ -402,7 +405,7 @@ fields:
       - Sibling of ${client}
       - Cousin
       - Friend
-      - Paid representative (from an agency or company): employee of an agency
+      - Representative payee (from an agency or company): employee of an agency
       - Other: other
   - What is your title?: rep_payee.title
     show if:
@@ -503,6 +506,7 @@ subquestion: |
 
 
 ---
+id: download
 need: calculated_ledger
 section: download_report
 event: pdf_report
@@ -515,7 +519,8 @@ subquestion: |
 
   ### Appendix
   ${pdf_concatenate(ssa_6233_appendix)}
-
+attachment code: |
+  [ ssa_6233, ssa_6233_appendix ]
 ---
 code: |
   details = ""
