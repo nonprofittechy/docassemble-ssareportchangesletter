@@ -14,11 +14,13 @@ metadata:
 ---
 modules:
   - docassemble.base.util
-  - docassemble.ssa.ssa
+  #- docassemble.ssa.ssa
+  - .ssa
   - docassemble.income.income
----
-include:
-  - docassemble.ssa:ssa.yml
+#---
+#include:
+#  - docassemble.ssa:ssa.yml
+#  - ssa.yml
 ---
 features:
   javascript: 
@@ -210,12 +212,20 @@ terms:
 id: benefits type
 question: |
   What kind of Social Security benefits are you receiving?
-field: benefits_type
-choices:
-  - SSI (Supplemental Security Income): ssi
-  - SSDI (Social Security Disability): ssdi
-under: |
-  How can I tell?
+fields: 
+  - no label: benefits_type_checkboxes
+    datatype: checkboxes
+    choices:
+      - SSI (Supplemental Security Income): ssi
+      - SSDI (Social Security Disability): ssdi
+    minlength: 1      
+---
+code: |
+  # only special options come about if they receive SSI
+  if benefits_type_checkboxes['ssi']:
+    benefits_type = 'ssi'
+  else:
+    benefits_type = 'ssdi'
 ---
 id: change type
 question: |
@@ -243,6 +253,15 @@ fields:
       - I received assistance to pay for rent or food
       - I received money from a lawsuit or lottery winnings
       - My immigration status changed
+    none of the above: False
+  - Something else: has_something_else
+    datatype: yesnowide
+  - What else would you like to report?: other_changes
+    datatype: area
+    show if: has_something_else
+validation code: |
+  if not has_something_else:
+    other_changes = ''
 ---
 code: |
   jobs.there_are_any = working or working_for_self
@@ -320,7 +339,7 @@ code: |
   changes_temp = []
 
   for change in changes.true_values():
-    change_details[change].name = text_type(change)
+    change_details[change].name = change # text_type(change)
     changes_temp.append({
       'field': "change_details['" + change + "'].date",
       'datatype': 'date',

@@ -1,4 +1,4 @@
-from docassemble.base.util import validation_error, Address, DAObject, DAList, text_type, Person, title_case
+from docassemble.base.util import validation_error, Address, DAObject, DAList, Person, title_case, log
 import re
 import requests
 
@@ -67,7 +67,7 @@ class FieldOfficeSearcher(DAObject):
     #@staticmethod
     def nearest_offices_by_lat_lng(self, latitude, longitude, distance=5):
         """Search for nearby SSA offices, and return raw GeoJSON results"""
-        url =   "http://services6.arcgis.com/zFiipv75rloRP5N4/ArcGIS/rest/services/Office_Points/FeatureServer/1/query"
+        url =   "https://services6.arcgis.com/zFiipv75rloRP5N4/ArcGIS/rest/services/Office_Points/FeatureServer/1/query"
         
         params = {
             'geometry': str(longitude) + ',' + str(latitude),
@@ -111,7 +111,10 @@ class FieldOfficeSearcher(DAObject):
         r = requests.get(url, params=params)
 
         self.url = r.url
+        # log(r.url)
+        # return {}
 
+        # TODO: make this safe if API is offline
         jdata = r.json()
 
         return jdata
