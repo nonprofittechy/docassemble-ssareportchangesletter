@@ -60,10 +60,10 @@ code: |
   # added_benefits
   dedicated_account_deposits.gather()
   dedicated_account.gather()
-  if not used_for_valid_purpose:
-    how_spending_benefited_client
   review_account
   gather_receipts
+  if not used_for_valid_purpose:
+    how_spending_benefited_client
   # final_report  
   pdf_report
 #---
@@ -130,16 +130,16 @@ id: address
 question: |
   What is your address?
 fields:
-  - address: rep_payee.address.address
+  - Address: rep_payee.address.address
     address autocomplete: True
-  - unit: rep_payee.address.unit
+  - Unit: rep_payee.address.unit
     required: False
-  - city: rep_payee.address.city
-  - state: rep_payee.address.state
+  - City: rep_payee.address.city
+  - State: rep_payee.address.state
     code: |
       states_list()
     default: "MA"
-  - zip: rep_payee.address.zip
+  - Zip: rep_payee.address.zip
   - What is your phone number?: rep_payee.phone_number
     datatype: tel
 #---
@@ -184,6 +184,7 @@ fields:
       - Education: education
       - Job skills: job skills training
       - Something else: other
+    none of the above: false
 ---
 reconsider: True
 comment: |
@@ -191,7 +192,7 @@ comment: |
 code: |
   temp_used_for_valid_purpose = True
   for entry in dedicated_account:
-    temp_used_for_valid_purpose &= not set(entry.purpose).isdisjoint(['medical treatment','education','job skills training'])
+    temp_used_for_valid_purpose &= not (entry.purpose).isdisjoint(['medical treatment','education','job skills training'])
   used_for_valid_purpose = temp_used_for_valid_purpose
 ---
 id: benefit
@@ -202,6 +203,7 @@ subquestion: |
   for either medical expenses, education, or training.
 fields:
   - How did your spending benefit ${client} and how were they related to ${client}'s disability?: how_spending_benefited_client
+    maxlength: 405
     datatype: area  
 ---
 id: receipts
@@ -269,13 +271,16 @@ subquestion: |
 fields:
   - I was convicted of (or plead guilty) to a felony: had_felony
     datatype: yesno
-  - Please explain what type of crime it was: had_felony_explanation
+  - Explain what type of crime it was: had_felony_explanation
+    maxlength: 330
     datatype: area
     show if: had_felony
   - ${client} moved or is living with someone else.: client_moved
     datatype: yesno
-  - Please explain why ${client} moved: client_moved_explanation
+  - Explain the reason for the change. [BR] [BR] Provide ${client.possessive('new address')} if they moved: client_moved_explanation
+    maxlength: 410
     datatype: area
+    rows: 6
     show if: client_moved
 ---
 code: |
@@ -405,12 +410,12 @@ fields:
       - Sibling of ${client}
       - Cousin
       - Friend
-      - Representative payee (from an agency or company): employee of an agency
+      - Representative payee (from an agency or company): Employee of an agency
       - Other: other
   - What is your title?: rep_payee.title
     show if:
       variable: rep_payee.relationship
-      is: "employee of an agency"
+      is: "Representative payee (from an agency or company)"
   - How are you related?: rep_payee.relationship
     show if:
       variable: rep_payee.relationship
@@ -547,8 +552,8 @@ attachment:
     filename: ssa_6233
     pdf template file: SSA-6233-dedicated_account_record.pdf
     fields:
-      - "DateFrom": ${date_from}
-      - "DateTo": ${date_to}
+      - "DateFrom": ${ format_date(date_from, format='MM/dd/yyyy') }
+      - "DateTo": ${ format_date(date_to, format='MM/dd/yyyy') }
       - "Ssn": ${client.ssn}
       - "PayeeNameAndAddress": ${rep_payee.address_block()}
       - "Name": ${client}
