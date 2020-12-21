@@ -201,7 +201,10 @@ comment: |
 code: |
   temp_used_for_valid_purpose = True
   for entry in dedicated_account:
-    temp_used_for_valid_purpose &= not entry.purpose.isdisjoint(['medical treatment','education','job skills training'])
+    # 
+    if entry.purpose.true_values().isdisjoint(['medical treatment','education','job skills training']):
+      temp_used_for_valid_purpose = False
+      continue
   used_for_valid_purpose = temp_used_for_valid_purpose
 ---
 id: benefit
