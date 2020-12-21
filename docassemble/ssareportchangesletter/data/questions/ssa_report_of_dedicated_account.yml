@@ -184,7 +184,7 @@ fields:
       - Education: education
       - Job skills: job skills training
       - Something else: other
-    none of the above: false
+    #none of the above: false
 ---
 reconsider: True
 comment: |
@@ -192,7 +192,7 @@ comment: |
 code: |
   temp_used_for_valid_purpose = True
   for entry in dedicated_account:
-    temp_used_for_valid_purpose &= not (entry.purpose).isdisjoint(['medical treatment','education','job skills training'])
+    temp_used_for_valid_purpose &= not entry.purpose.isdisjoint(['medical treatment','education','job skills training'])
   used_for_valid_purpose = temp_used_for_valid_purpose
 ---
 id: benefit
@@ -391,9 +391,9 @@ fields:
     datatype: currency
   - Total dedicated account balance: report_dedicated_account_total_balance
     datatype: currency
-  - Did you deposit any money into the account between ${date_from} and ${date_to}?: dedicated_account_deposits.there_are_any
+  - Did you deposit any money into the account between ${ format_date(date_from, format='MM/dd/yyyy') } and ${ format_date(date_to, format='MM/dd/yyyy') } ?: dedicated_account_deposits.there_are_any
     datatype: yesnoradio
-  - Did you take any money out of the dedicated account between ${date_from} and ${date_to}?: dedicated_account.there_are_any
+  - Did you take any money out of the dedicated account between ${ format_date(date_from, format='MM/dd/yyyy') } and ${ format_date(date_to, format='MM/dd/yyyy') } ?: dedicated_account.there_are_any
     datatype: yesnoradio
 ---
 id: relationship to recipient
@@ -415,8 +415,8 @@ fields:
   - What is your title?: rep_payee.title
     show if:
       variable: rep_payee.relationship
-      is: "Representative payee (from an agency or company)"
-  - How are you related?: rep_payee.relationship
+      is: "Employee of an agency"
+  - How are you related?: rep_payee.title
     show if:
       variable: rep_payee.relationship
       is: "other"
@@ -560,8 +560,8 @@ attachment:
       - "HadFelonyYes": ${had_felony}
       - "HadFelonyNo": ${not had_felony}
       - "HadFelonyExplanation": ${had_felony_explanation if had_felony else ''}
-      - "ClientMovedNo": ${client_moved}
-      - "ClientMovedYes": ${not client_moved}
+      - "ClientMovedNo": ${not client_moved}
+      - "ClientMovedYes": ${client_moved}
       - "ClientMovedExplanation": ${client_moved_explanation if client_moved else '' }
       #- "BenefitsPaid": ${
       #- "BenefitsPriorYears": something
@@ -599,7 +599,14 @@ attachment:
       - "RepPayeeSignature": ${ rep_payee.signature }
       - "SignatureDate": ${today()}
       - "PhoneNumber": ${rep_payee.phone_number}
-      - "RepPayeeRelationship": ${rep_payee.relationship}
+      - "RepPayeeRelationship": |
+          % if rep_payee.relationship == 'other':
+          ${rep_payee.title}
+          % elif rep_payee.relationship == 'Employee of an agency':
+          ${rep_payee.title}
+          % else: 
+          ${rep_payee.relationship} 
+          % endif
 ---
 event: final_report
 question: |
