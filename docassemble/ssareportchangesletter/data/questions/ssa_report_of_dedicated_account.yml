@@ -54,6 +54,7 @@ code: |
     skip_ledger
   client.name.first
   rep_payee.name.first
+  rep_payee.address.address
   rep_payee.relationship
   had_felony
   dedicated_account_deposits
@@ -127,6 +128,7 @@ fields:
     default: False
 ---
 id: address
+section: rep_info
 question: |
   What is your address?
 fields:
@@ -142,6 +144,13 @@ fields:
   - Zip: rep_payee.address.zip
   - What is your phone number?: rep_payee.phone_number
     datatype: tel
+---
+id: signature
+section: signature
+generic object: Individual
+question: |
+  ${capitalize(x.possessive('signature'))}
+signature: x.signature
 #---
 #question: |
 #  Did you put any money in or take any money out of your dedicated account in the
