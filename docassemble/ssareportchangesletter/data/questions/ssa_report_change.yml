@@ -238,9 +238,9 @@ fields:
 ---
 id: client ssn
 question: |
-  Social Security Number
+  What is your Social Security Number?
 fields:
-  - What is your Social Security Number?: client.ssn
+  - Social Security Number: client.ssn
     datatype: ssn
     validate: is_valid_ssn
 under: |
@@ -331,7 +331,10 @@ fields:
     show if: 
       variable: jobs[i].employer_type
       is: "employer"
-  - What kind of work do you do for yourself?: jobs[i].self_employment_type      
+  - What kind of work do you do for yourself?: jobs[i].self_employment_type  
+    hide if: 
+      variable: jobs[i].employer_type
+      is: "employer"
   - Address of employer: jobs[i].employer_address
     required: False
     address autocomplete: True
@@ -529,7 +532,10 @@ id: details
 question: |
   Add any more details
 subquestion: |
-  You mentioned the following changes: comma_and_list( ${changes.true_values()}  ${showifdef('other_changes')}) 
+  You mentioned the following changes: 
+  
+  ${changes.true_values()} 
+  ${showifdef('other_changes')} 
   
   If you want to add any more information about any of those changes, you can do so below.  
 fields:
@@ -555,8 +561,18 @@ id: download form
 event: download_form
 question: |
   Here is your document.
+  [BR]
+  [BR]
+  ${ final_form }
+subquestion: |
+  Your form is ready for download below. 
+  
+attachment code: final_form
+---
+id: final attachment
 attachment:
   name: ${client}'s Letter to SSA
+  variable name: final_form
   filename: ${space_to_underscore(format_date(today()) + client.possessive('letter to SSA'))}
   docx template file: ssa_report_change.docx
   valid formats:
