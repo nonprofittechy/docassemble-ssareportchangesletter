@@ -193,7 +193,7 @@ fields:
       - Education: education
       - Job skills: job skills training
       - Something else: other
-    #none of the above: false
+    none of the above: false
 ---
 reconsider: True
 comment: |
