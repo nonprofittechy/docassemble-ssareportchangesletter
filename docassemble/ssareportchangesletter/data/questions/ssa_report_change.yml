@@ -395,7 +395,7 @@ question: |
 fields:
   - Date entered : jail_start
     datatype: date
-  - Date entered : jail_end 
+  - Date left jail : jail_end 
     datatype: date
 ---
 code: |
@@ -409,7 +409,7 @@ question: |
 fields:
   - Date entered : hospital_start
     datatype: date
-  - Date entered : hospital_end 
+  - Date left hospital : hospital_end 
     datatype: date
 ---
 code: |
@@ -423,7 +423,7 @@ question: |
 fields:
   - Date entered : nursing_start
     datatype: date
-  - Date entered : nursing_end 
+  - Date left nursing home : nursing_end 
     datatype: date
 ---
 code: |
@@ -437,7 +437,7 @@ question: |
 fields:
   - Date entered : expat_start
     datatype: date
-  - Date entered : expat_end
+  - Date left foreign country : expat_end
     datatype: date
 ---
 code: |
