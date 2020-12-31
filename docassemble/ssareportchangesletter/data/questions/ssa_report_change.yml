@@ -56,6 +56,8 @@ code: |
   letter_date
   intro_screen
   client.name.first
+  client.phone_number
+  client.ssn
   benefits_type
   set_changes
   if working or working_for_self:
@@ -66,10 +68,39 @@ code: |
     wrong_interview
   else:
     if benefits_type == 'ssi':
-      if changes.true_values().number() > 0:
-        saw_change_choices
+      #if changes.true_values().number() > 0:
+      if changes['I moved']:
+        #saw_change_choices     
+        yes_moved
+      if changes['I was in jail']: 
+        yes_jail
+        jail_range
+      if changes['I was in the hospital']:  
+        yes_hospital
+        hopsital_range
+      if changes['I was in a nursing home']: 
+        yes_nursing
+        nursing_range
+      if changes['I was outside of the United States for more than 30 days in a row']: 
+        yes_expat
+        expat_range
+      if changes['The number of people in my household changed']:
+        change_details['The number of people in my household changed'].reasons
+        household_change_date
+        
+      if changes['I received assistance to pay for rent or food']:
+        change_details['I received assistance to pay for rent or food'].date
+        
+      if changes['I received money from a lawsuit or lottery winnings']: 
+        change_details['I received money from a lawsuit or lottery winnings'].date 
+        
+        
+        
+      if changes['My immigration status changed']: 
+        change_details['My immigration status changed'].date 
+        
+  changes_details
   ssa_office.name.text
-  client.ssn
   client.signature
   download_form
 ---
@@ -207,9 +238,9 @@ fields:
 ---
 id: client ssn
 question: |
-  Social Security Number
+  What is your Social Security Number?
 fields:
-  - What is your Social Security Number?: client.ssn
+  - Social Security Number: client.ssn
     datatype: ssn
     validate: is_valid_ssn
 under: |
@@ -300,7 +331,10 @@ fields:
     show if: 
       variable: jobs[i].employer_type
       is: "employer"
-  - What kind of work do you do for yourself?: jobs[i].self_employment_type      
+  - What kind of work do you do for yourself?: jobs[i].self_employment_type  
+    hide if: 
+      variable: jobs[i].employer_type
+      is: "employer"
   - Address of employer: jobs[i].employer_address
     required: False
     address autocomplete: True
@@ -329,6 +363,86 @@ fields:
       is: "self"
   - I have pay stubs for this job.: jobs[i].have_pay_stubs
     datatype: yesno
+
+---
+#comment: |
+#  This builds a follow-up question that asks about
+#  the date each change happened.
+#code: |
+#  changes_temp = []
+#
+#  for change in changes.true_values():
+#    change_details[change].name = change # text_type(change)
+#    changes_temp.append({
+#      'field': "change_details['" + change + "'].date",
+#      'datatype': 'date',
+#      'label': 'Date that "' + change + '"'
+#    })
+#  change_choices = changes_temp
+---
+id: moved date 
+continue button field: yes_moved
+question: | 
+  What was the date that you moved? 
+fields:
+  - Date: change_details['I moved'].date
+    datatype: date
+---
+id: jail date 
+continue button field: yes_jail
+question: | 
+  What was the date that you were in jail? 
+fields:
+  - Date entered : jail_start
+    datatype: date
+  - Date left jail : jail_end 
+    datatype: date
+---
+code: |
+  jail_range = True
+  change_details['I was in jail'].date = jail_start + ' ' + 'to' + ' ' + jail_end
+---
+id: hospital 
+continue button field: yes_hospital
+question: | 
+  What was the date that you were in the hospital? 
+fields:
+  - Date entered : hospital_start
+    datatype: date
+  - Date left hospital : hospital_end 
+    datatype: date
+---
+code: |
+  hopsital_range = True
+  change_details['I was in the hospital'].date = hospital_start + ' ' + 'to' + ' ' + hospital_end
+---
+id: nursing home 
+continue button field: yes_nursing 
+question: | 
+  When were in the nursing home? 
+fields:
+  - Date entered : nursing_start
+    datatype: date
+  - Date left nursing home : nursing_end 
+    datatype: date
+---
+code: |
+  nursing_range = True
+  change_details['I was in a nursing home'].date = nursing_start + ' ' + 'to' + ' ' + nursing_end
+---
+id: outside US
+continue button field: yes_expat
+question: | 
+  When were you outside of the United States for more than 30 days in a row?
+fields:
+  - Date entered : expat_start
+    datatype: date
+  - Date left foreign country : expat_end
+    datatype: date
+---
+code: |
+  expat_range = True
+  change_details['I was outside of the United States for more than 30 days in a row'].date = expat_start + ' ' + 'to' + ' ' + expat_end
 ---
 id: household change details
 question: |
@@ -342,20 +456,34 @@ fields:
       - I married
       - I had a child
 ---
-comment: |
-  This builds a follow-up question that asks about
-  the date each change happened.
-code: |
-  changes_temp = []
-
-  for change in changes.true_values():
-    change_details[change].name = change # text_type(change)
-    changes_temp.append({
-      'field': "change_details['" + change + "'].date",
-      'datatype': 'date',
-      'label': 'Date that "' + change + '"'
-    })
-  change_choices = changes_temp
+id: household change date
+continue button field: household_change_date
+question: | 
+  What was the date that your household changed?
+fields:
+  - Date: change_details['The number of people in my household changed'].date
+    datatype: date
+---
+id: recieved assistance
+question: | 
+  When did you received assistance to pay for rent or food
+fields:
+  - Date: change_details['I received assistance to pay for rent or food'].date 
+    datatype: date
+---
+id: lawsuit or lottery
+question: | 
+  When did you received money from a lawsuit or lottery winnings?
+fields:
+  - Date: change_details['I received money from a lawsuit or lottery winnings'].date 
+    datatype: date
+---
+id: immigration status
+question: | 
+  When did your immigration status change?
+fields:
+  - Date: change_details['My immigration status changed'].date 
+    datatype: date
 ---
 id: other changes
 question: |
@@ -368,23 +496,23 @@ fields:
 id: contact info
 generic object: Person
 question: |
-  ${x}'s Contact Information
+  ${ client.name}'s Contact Information
 fields:
-  - Home or cell phone number: x.phone_number
+  - Home or cell phone number: client.phone_number
     datatype: tel  
     required: False
-  - Work phone number: x.phone_work
+  - Work phone number: client.phone_work
     datatype: tel  
     required: False
-  - Address: x.address.address
+  - Address: client.address.address
     address autocomplete: True
-  - Unit or Apt: x.address.unit
+  - Unit or Apt: client.address.unit
     required: False
-  - City: x.address.city
-  - State: x.address.state
+  - City: client.address.city
+  - State: client.address.state
     code: |
       states_list()
-  - Zip code: x.address.zip
+  - Zip code: client.address.zip
     required: False
   #- County: x.address.county
   #  required: False
@@ -404,8 +532,12 @@ id: details
 question: |
   Add any more details
 subquestion: |
-  You mentioned the following changes: ${changes.true_values()}. If you want to add
-  any more information about any of those changes, you can do so below.  
+  You mentioned the following changes: 
+  
+  ${changes.true_values()} 
+  ${showifdef('other_changes')} 
+  
+  If you want to add any more information about any of those changes, you can do so below.  
 fields:
   - no label: changes_details
     datatype: area
@@ -429,8 +561,18 @@ id: download form
 event: download_form
 question: |
   Here is your document.
+  [BR]
+  [BR]
+  ${ final_form }
+subquestion: |
+  Your form is ready for download below. 
+  
+attachment code: final_form
+---
+id: final attachment
 attachment:
   name: ${client}'s Letter to SSA
+  variable name: final_form
   filename: ${space_to_underscore(format_date(today()) + client.possessive('letter to SSA'))}
   docx template file: ssa_report_change.docx
   valid formats:

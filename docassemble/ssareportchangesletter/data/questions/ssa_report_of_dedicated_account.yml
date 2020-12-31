@@ -54,16 +54,17 @@ code: |
     skip_ledger
   client.name.first
   rep_payee.name.first
+  rep_payee.address.address
   rep_payee.relationship
   had_felony
   dedicated_account_deposits
   # added_benefits
   dedicated_account_deposits.gather()
   dedicated_account.gather()
-  if not used_for_valid_purpose:
-    how_spending_benefited_client
   review_account
   gather_receipts
+  if not used_for_valid_purpose:
+    how_spending_benefited_client
   # final_report  
   pdf_report
 #---
@@ -127,21 +128,29 @@ fields:
     default: False
 ---
 id: address
+section: rep_info
 question: |
   What is your address?
 fields:
-  - address: rep_payee.address.address
+  - Address: rep_payee.address.address
     address autocomplete: True
-  - unit: rep_payee.address.unit
+  - Unit: rep_payee.address.unit
     required: False
-  - city: rep_payee.address.city
-  - state: rep_payee.address.state
+  - City: rep_payee.address.city
+  - State: rep_payee.address.state
     code: |
       states_list()
     default: "MA"
-  - zip: rep_payee.address.zip
+  - Zip: rep_payee.address.zip
   - What is your phone number?: rep_payee.phone_number
     datatype: tel
+---
+id: signature
+section: signature
+generic object: Individual
+question: |
+  ${capitalize(x.possessive('signature'))}
+signature: x.signature
 #---
 #question: |
 #  Did you put any money in or take any money out of your dedicated account in the
@@ -184,6 +193,7 @@ fields:
       - Education: education
       - Job skills: job skills training
       - Something else: other
+    none of the above: false
 ---
 reconsider: True
 comment: |
@@ -191,7 +201,10 @@ comment: |
 code: |
   temp_used_for_valid_purpose = True
   for entry in dedicated_account:
-    temp_used_for_valid_purpose &= not set(entry.purpose).isdisjoint(['medical treatment','education','job skills training'])
+    # 
+    if entry.purpose.true_values().isdisjoint(['medical treatment','education','job skills training']):
+      temp_used_for_valid_purpose = False
+      continue
   used_for_valid_purpose = temp_used_for_valid_purpose
 ---
 id: benefit
@@ -202,6 +215,7 @@ subquestion: |
   for either medical expenses, education, or training.
 fields:
   - How did your spending benefit ${client} and how were they related to ${client}'s disability?: how_spending_benefited_client
+    maxlength: 405
     datatype: area  
 ---
 id: receipts
@@ -269,13 +283,16 @@ subquestion: |
 fields:
   - I was convicted of (or plead guilty) to a felony: had_felony
     datatype: yesno
-  - Please explain what type of crime it was: had_felony_explanation
+  - Explain what type of crime it was: had_felony_explanation
+    maxlength: 330
     datatype: area
     show if: had_felony
   - ${client} moved or is living with someone else.: client_moved
     datatype: yesno
-  - Please explain why ${client} moved: client_moved_explanation
+  - Explain the reason for the change. [BR] [BR] Provide ${client.possessive('new address')} if they moved: client_moved_explanation
+    maxlength: 410
     datatype: area
+    rows: 6
     show if: client_moved
 ---
 code: |
@@ -386,9 +403,9 @@ fields:
     datatype: currency
   - Total dedicated account balance: report_dedicated_account_total_balance
     datatype: currency
-  - Did you deposit any money into the account between ${date_from} and ${date_to}?: dedicated_account_deposits.there_are_any
+  - Did you deposit any money into the account between ${ format_date(date_from, format='MM/dd/yyyy') } and ${ format_date(date_to, format='MM/dd/yyyy') } ?: dedicated_account_deposits.there_are_any
     datatype: yesnoradio
-  - Did you take any money out of the dedicated account between ${date_from} and ${date_to}?: dedicated_account.there_are_any
+  - Did you take any money out of the dedicated account between ${ format_date(date_from, format='MM/dd/yyyy') } and ${ format_date(date_to, format='MM/dd/yyyy') } ?: dedicated_account.there_are_any
     datatype: yesnoradio
 ---
 id: relationship to recipient
@@ -405,13 +422,13 @@ fields:
       - Sibling of ${client}
       - Cousin
       - Friend
-      - Representative payee (from an agency or company): employee of an agency
+      - Representative payee (from an agency or company): Employee of an agency
       - Other: other
   - What is your title?: rep_payee.title
     show if:
       variable: rep_payee.relationship
-      is: "employee of an agency"
-  - How are you related?: rep_payee.relationship
+      is: "Employee of an agency"
+  - How are you related?: rep_payee.title
     show if:
       variable: rep_payee.relationship
       is: "other"
@@ -547,16 +564,16 @@ attachment:
     filename: ssa_6233
     pdf template file: SSA-6233-dedicated_account_record.pdf
     fields:
-      - "DateFrom": ${date_from}
-      - "DateTo": ${date_to}
+      - "DateFrom": ${ format_date(date_from, format='MM/dd/yyyy') }
+      - "DateTo": ${ format_date(date_to, format='MM/dd/yyyy') }
       - "Ssn": ${client.ssn}
       - "PayeeNameAndAddress": ${rep_payee.address_block()}
       - "Name": ${client}
       - "HadFelonyYes": ${had_felony}
       - "HadFelonyNo": ${not had_felony}
       - "HadFelonyExplanation": ${had_felony_explanation if had_felony else ''}
-      - "ClientMovedNo": ${client_moved}
-      - "ClientMovedYes": ${not client_moved}
+      - "ClientMovedNo": ${not client_moved}
+      - "ClientMovedYes": ${client_moved}
       - "ClientMovedExplanation": ${client_moved_explanation if client_moved else '' }
       #- "BenefitsPaid": ${
       #- "BenefitsPriorYears": something
@@ -594,7 +611,14 @@ attachment:
       - "RepPayeeSignature": ${ rep_payee.signature }
       - "SignatureDate": ${today()}
       - "PhoneNumber": ${rep_payee.phone_number}
-      - "RepPayeeRelationship": ${rep_payee.relationship}
+      - "RepPayeeRelationship": |
+          % if rep_payee.relationship == 'other':
+          ${rep_payee.title}
+          % elif rep_payee.relationship == 'Employee of an agency':
+          ${rep_payee.title}
+          % else: 
+          ${rep_payee.relationship} 
+          % endif
 ---
 event: final_report
 question: |
