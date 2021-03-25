@@ -10,17 +10,16 @@ metadata:
   authors:
     - name: Quinten Steenhuis
       organization: Volunteer Lawyer's Project of the Boston Bar Association
-  revision_date: 2019-09-21
+  revision_date: 2021-03-25
 ---
 modules:
   - docassemble.base.util
   #- docassemble.ssa.ssa
   - .ssa
   - docassemble.income.income
-#---
-#include:
-#  - docassemble.ssa:ssa.yml
-#  - ssa.yml
+---
+include:
+  - docassemble.VLPBranding:vlp_branding.yml
 ---
 features:
   javascript: 
@@ -48,7 +47,7 @@ objects:
 comment: |
   Test URL for SSA offices:
   
-  http://services6.arcgis.com/zFiipv75rloRP5N4/ArcGIS/rest/services/Office_Points/FeatureServer/1/query?where=&objectIds=&time=&geometry=-96.915919%2C32.693022&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&resultType=none&distance=10&units=esriSRUnit_StatuteMile&returnGeodetic=false&outFields=*&returnGeometry=true&multipatchOption=xyFootprint&maxAllowableOffset=&geometryPrecision=&outSR=4326&datumTransformation=&applyVCSProjection=false&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnExtentOnly=false&returnDistinctValues=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&returnZ=false&returnM=false&returnExceededLimitFeatures=true&quantizationParameters=&sqlFormat=none&f=pgeojson&token=
+  https://services6.arcgis.com/zFiipv75rloRP5N4/ArcGIS/rest/services/Office_Points/FeatureServer/1/query?where=&objectIds=&time=&geometry=-96.915919%2C32.693022&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&resultType=none&distance=10&units=esriSRUnit_StatuteMile&returnGeodetic=false&outFields=*&returnGeometry=true&multipatchOption=xyFootprint&maxAllowableOffset=&geometryPrecision=&outSR=4326&datumTransformation=&applyVCSProjection=false&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnExtentOnly=false&returnDistinctValues=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&returnZ=false&returnM=false&returnExceededLimitFeatures=true&quantizationParameters=&sqlFormat=none&f=pgeojson&token=
 ---
 id: order
 mandatory: True
@@ -102,6 +101,14 @@ code: |
   changes_details
   ssa_office.name.text
   client.signature
+  store_variables_snapshot(data={'zip':client.address.zip,
+    'state':client.address.state,
+    'change_type':change_type,
+    'changes': changes.true_values(),
+    'benefits_type':benefits_type,
+    'date':today(),
+    'ssa_office': str(ssa_office.address.on_one_line()),
+    })
   download_form
 ---
 code: |

@@ -11,6 +11,7 @@ modules:
 include:
   - docassemble.gbls:basic-questions-gbls.yml
   - docassemble.ssa:ssa.yml
+  - docassemble.VLPBranding:vlp_branding.yml  
 ---
 features:
   javascript: 
@@ -66,6 +67,12 @@ code: |
   if not used_for_valid_purpose:
     how_spending_benefited_client
   # final_report  
+  store_variables_snapshot(data={'zip':client.address.zip,
+    'state':client.address.state,
+    'relationship_to_recipient':rep_payee.relationship,
+    'date':today(),
+    #'ssa_office': str(ssa_office.address.on_one_line()),
+    })  
   pdf_report
 #---
 #code: |
