@@ -51,8 +51,8 @@ scan for variables: False
 mandatory: True
 code: |
   intro_screen
-  if len(ledger_interviews) > 0: # Check for existing ledgers from past sessions
-    skip_ledger
+  #if len(ledger_interviews) > 0: # Check for existing ledgers from past sessions
+  #  skip_ledger
   client.name.first
   rep_payee.name.first
   rep_payee.address.address
@@ -78,14 +78,14 @@ code: |
 #code: |
 #  dedicated_account.there_are_any = deposited_into_dedicated_account or withdrew_money_from_dedicated_account 
 ---
-code: |
-  # int_path = 'docassemble.ssareportchangesletter'
-  int_path = 'docassemble.playground7'
-  ledger_interviews = interview_list(filename=int_path + ':ssa_dedicated_account_ledger.yml')[0]
-  ledger_choices_temp = []
-  for index, ledger in enumerate(ledger_interviews):
-    ledger_choices_temp.append({index: ledger.get('session')})
-  ledger_choices = ledger_choices_temp
+#code: |
+#  # int_path = 'docassemble.ssareportchangesletter'
+#  int_path = 'docassemble.playground7'
+#  ledger_interviews = interview_list(filename=int_path + ':ssa_dedicated_account_ledger.yml')[0]
+#  ledger_choices_temp = []
+#  for index, ledger in enumerate(ledger_interviews):
+#    ledger_choices_temp.append({index: ledger.get('session')})
+#  ledger_choices = ledger_choices_temp
 ---
 id: intro screen
 section: intro
