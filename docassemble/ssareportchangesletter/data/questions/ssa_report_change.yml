@@ -316,7 +316,7 @@ code: |
 ---
 id: job is there another
 question: |
-  So far you have told us about ${i+1} jobs.
+  So far you have told us about ${ len(jobs.complete_elements()) } jobs.
 subquestion: |
   Do you have any other jobs to report?
 yesno: jobs.there_is_another

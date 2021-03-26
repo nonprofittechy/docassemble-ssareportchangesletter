@@ -31,9 +31,13 @@ class FieldOfficeList(DAList):
         distance = 5 # start out searching for offices within 5 miles
 
         results = self.searcher.nearest_offices(address, distance=distance)
+        
+        if not can_geolocate(address):
+          self.gathered=True
+          return None
 
         loop = 1
-        max_loop = 9
+        max_loop = 9        
 
         try:
             # Keep expanding the search radius if we didn't get enough matches in the default distance
@@ -42,20 +46,22 @@ class FieldOfficeList(DAList):
                 results = self.searcher.nearest_offices(address, distance=distance)
                 loop += 1
         except:
+            self.gathered = True
             return None
 
-        for item in results['features']:
+        for item in results.get('features',{}):
             fo = self.appendObject()
-            fo.name.text = title_case(item['properties']['AddressLine1']) 
-            fo.title = title_case(item['properties']['OfficeName'])
-            fo.address.address = title_case(item['properties']['AddressLine3'])
-            if item['properties']['AddressLine2']:
-                fo.address.unit = title_case(item['properties']['AddressLine2'])
-            fo.address.city = title_case(item['properties']['City'])
-            fo.address.state = item['properties']['State']
-            fo.address.zip = item['properties']['ZIP5']
-            fo.office_code = item['properties']['OfficeCode']
-            fo.phone_number = item['properties']['BusinessPhone']
+            props = item.get('properties',{})
+            fo.name.text = title_case(props.get('AddressLine1','')) 
+            fo.title = title_case(props.get('OfficeName',''))
+            fo.address.address = title_case(props.get('AddressLine3',''))
+            if props.get('AddressLine2'):
+                fo.address.unit = title_case(props.get('AddressLine2',''))
+            fo.address.city = title_case(props.get('City',''))
+            fo.address.state = props.get('State')
+            fo.address.zip = props.get('ZIP5')
+            fo.office_code = props.get('OfficeCode')
+            fo.phone_number = props.get('BusinessPhone')
 
         self.gathered = True
 
@@ -107,8 +113,10 @@ class FieldOfficeSearcher(DAObject):
             'resultRecordCount': '',
             'token': ''
         }
-        
-        r = requests.get(url, params=params)
+        try:
+          r = requests.get(url, params=params)
+        except:
+          return {}
 
         self.url = r.url
         # log(r.url)
@@ -123,12 +131,18 @@ class FieldOfficeSearcher(DAObject):
         if hasattr(address.location,'longitude') and hasattr(address.location, 'latitude'):
             return self.nearest_offices_by_lat_lng(address.location.latitude,address.location.longitude, distance=distance)
         else:
-            address.geolocate()
-            if address.geolocate_success:
-                return self.nearest_offices_by_lat_lng(address.location.latitude,address.location.longitude, distance=distance)
+            if can_geolocate(address):
+              return self.nearest_offices_by_lat_lng(address.location.latitude,address.location.longitude, distance=distance)
             else:
-                return None
+              return None
 
+def can_geolocate(address:Address)->bool:
+  if hasattr(address,'geolocate_success'):
+    return address.geolocate_success
+  else:
+    address.geolocate()
+    return address.geolocate_success              
+              
 if __name__ == '__main__':
     # import pprint
     # res = FieldOfficeSearcher.nearest_office_by_lat_lng(42.3641657, -71.0626028,17)
