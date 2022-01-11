@@ -429,9 +429,6 @@ question: |
 fields:
   - Date: change_details['I moved'].date
     datatype: date
-  - note: |
-      Where did you move to?    
-      
 ---
 id: jail date 
 continue button field: yes_jail
@@ -651,3 +648,6 @@ attachment:
   valid formats:
     - pdf
     - docx
+---
+code: |
+  ssa_office.name.text = ""

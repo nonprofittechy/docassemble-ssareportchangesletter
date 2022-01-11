@@ -7,6 +7,7 @@ An interview to help an SSI or SSDI recipient report changes to the Social Secur
 Quinten Steenhuis, qsteenhuis@gmail.com
 
 ## Changelog
+* 2022-01-11 Bugfixes
 * 2021-12-18 Incorporate feedback from VLP
 * 2021-03-26 bugfixes
 * 2021-03-25 Add branding
