@@ -115,17 +115,11 @@ class FieldOfficeSearcher(DAObject):
         }
         try:
           r = requests.get(url, params=params)
+          self.url = r.url
+          jdata = r.json()
+          return jdata
         except:
           return {}
-
-        self.url = r.url
-        # log(r.url)
-        # return {}
-
-        # TODO: make this safe if API is offline
-        jdata = r.json()
-
-        return jdata
 
     def nearest_offices(self, address, distance=5):
         if hasattr(address.location,'longitude') and hasattr(address.location, 'latitude'):
