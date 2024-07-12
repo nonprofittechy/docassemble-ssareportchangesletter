@@ -10,7 +10,7 @@ metadata:
   authors:
     - name: Quinten Steenhuis
       organization: Volunteer Lawyer's Project of the Boston Bar Association
-  revision_date: 2021-12-18
+  revision_date: 2024-07-09
 ---
 modules:
   - docassemble.base.util
@@ -175,6 +175,9 @@ subquestion: |
   [important changes](https://blog.ssa.gov/reporting-changes-is-your-responsibility/) 
   in your life they need to know about.
 
+  [SSI Rights and Responsibilities](https://www.ssa.gov/ssi/spotlights/spot-rights-responsibilities.htm)
+
+  You must report any of the changes listed [here](https://www.ssa.gov/ssi/text-report-ussi.htm) no later than 10 days after the end of the month in which the change occured. 
   Before you start, you need to know if you are on
   
   * SSI (Supplemental Security Income), 
@@ -631,7 +634,7 @@ subquestion: |
   % if hasattr(ssa_office, 'phone_number') and ssa_office.phone_number:
   1. Call your local Social Security office at ${ phone_number_formatted(ssa_office.phone_number) } to find out how to get your letter to them. You can mail, fax, or deliver it in person if your office is open for in-person visits.
   % else:
-  1. Call Social Security at 1-800-772-1213 to find out how to get your letter to them. You can mail, fax, or deliver it in person if your local office is open for in-person visits.
+  1. Call Social Security at 1-800-772-1213 to find out how to get your letter to them. You can mail, fax, or deliver it in person if your local office is open for in-person visits. [Find Your Loca Office](https://secure.ssa.gov/ICON/main.jsp)
   % endif
   
 attachment code: final_form['final']
