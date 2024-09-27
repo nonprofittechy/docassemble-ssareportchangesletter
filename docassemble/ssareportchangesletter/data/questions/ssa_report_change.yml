@@ -5,12 +5,41 @@ metadata:
   short title: |
     SSA Report Changes
   description: |
-    This interview produces a letter for the Social Security Administration
-    that explains any changes that might affect your benefits.
+    If you get SSI or SSDI, you need to tell Social Security about changes in your life. 
+    This tool helps you write a letter to Social Security to report changes, including:
+
+    * Moving
+    * Starting to live by yourself or with someone else
+    * Being in jail
+    * Being in the hospital
+    * Being in a nursing home
+    * Being outside the United States for more than 30 days
+    * Getting help to pay for rent or food
+    * Getting money from a lawsuit or lottery
+    * Getting married or divorced
+  can_I_use_this_form: |
+    You can use this form if you are on SSI or SSDI and need to report changes to Social Security.
+  before_you_start: |
+    Before you start, you need to know if you are on SSI (Supplemental Security Income), SSDI (Social Security Disability), or both. If you are working and getting paid, you also need the name and address of the place you work, the number of hours you work, and how much you are paid. Your pay stubs should have all this information on them, so having them with you from the start will be helpful. If you are answering questions for someone else, you need their full name, address, and Social Security number.
+
+    Make sure you have specific information, like dates and addresses, before you start. This will help you complete the form more quickly.
+  maturity: production
+  estimated_completion_minutes: 15
+  estimated_completion_delta: 15
+  languages:
+    - en
+  help_page_url: https://www.ssa.gov/ssi/reporting/changes
+  help_page_title: Report changes to your situation
+  LIST_topics:
+    - BE-01-03-00-00
+  tags:
+    - BE-01-03-00-00
   authors:
     - name: Quinten Steenhuis
       organization: Volunteer Lawyer's Project of the Boston Bar Association
   revision_date: 2021-12-18
+  update_notes: |
+    2024 - added metadata
 ---
 modules:
   - docassemble.base.util
