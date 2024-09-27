@@ -5,6 +5,44 @@ code: |
 metadata:
   title: Report of benefits and Dedicated Account
   short title: Dedicated Account Ledger
+  description: |
+    This interview helps a parent or representative payee of a child on SSI
+    keep track of money spent from a dedicated account with the child's 
+    retroactive SSI benefits.
+  can_I_use_this_form: |
+    You can use this interview to fill out a Report of Benefits and Dedicated Account 
+    or to keep track of what you spent. It can be used by:
+
+    * A parent, or
+    * A representative payee of a child or dependent who gets SSI
+  before_you_start: |
+    Before you start, gather any records that show what you spent over the last year.
+    
+    Include:
+
+    * The letter from Social Security that tells you the period of the report
+    * The amount of money in the dedicated account as of your last report to SSA
+    * The amount of money you deposited into the account since your last report to SSA
+    * The amount of money you spent from the account since your last report to SSA
+  maturity: production
+  estimated_completion_minutes: 30
+  estimated_completion_delta: 15
+  languages:
+    - en
+  help_page_url: https://www.masslegalhelp.org/public-benefits-ssi/social-security-ssi
+  help_page_title: Social Security and SSI
+  LIST_topics:
+    - BE-01-03-00-00
+  tags:
+    - BE-01-03-00-00
+  jurisdiction: NAM-US
+  original_form: https://secure.ssa.gov/apps10/public/pomsimages.nsf/gfx_num/G-SSA-6233-BK-1/$File/G-SSA-6233-BK-1.pdf
+  form_numbers:
+    - SSA-6233-BK-1
+  form_titles: 
+    - Report of Benefits and Dedicated Account
+  update_notes: |
+    2024 - added metadata
 ---
 modules:
   - docassemble.income.income
