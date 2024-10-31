@@ -49,7 +49,7 @@ modules:
   - docassemble.GithubFeedbackForm.github_issue
 ---
 include:
-  - docassemble.gbls:basic-questions-gbls.yml
+  #- docassemble.gbls:basic-questions-gbls.yml
   - docassemble.ssa:ssa.yml
   - docassemble.VLPBranding:vlp_branding.yml  
 ---
