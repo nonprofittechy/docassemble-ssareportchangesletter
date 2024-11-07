@@ -49,9 +49,9 @@ modules:
   - docassemble.GithubFeedbackForm.github_issue
 ---
 include:
-  - docassemble.gbls:basic-questions-gbls.yml
+  #- docassemble.gbls:basic-questions-gbls.yml
   - docassemble.ssa:ssa.yml
-  - docassemble.VLPBranding:vlp_branding.yml  
+  - docassemble.VLPBranding:vlp_branding.yml
 ---
 features:
   javascript: 
@@ -99,6 +99,7 @@ code: |
   #if len(ledger_interviews) > 0: # Check for existing ledgers from past sessions
   #  skip_ledger
   client.name.first
+  client.address.address
   rep_payee.name.first
   rep_payee.address.address
   rep_payee.relationship
@@ -111,7 +112,8 @@ code: |
   gather_receipts
   if not used_for_valid_purpose:
     how_spending_benefited_client
-  # final_report  
+  rep_payee.signature
+  # final_report
   store_variables_snapshot(data={'zip':client.address.zip,
     'city': client.address.city,
     'state': client.address.state,
@@ -351,6 +353,17 @@ fields:
   #- Social Security Number: client.ssn
   #  datatype: ssn
   #  validate: is_valid_ssn
+---
+id: client_info
+section: client_info
+question: |
+  What is the client's address?
+fields:
+  - Address: client.address.address
+    address autocomplete: True
+  - City: client.address.city
+  - State: client.address.state
+  - Zip: client.address.zip
 ---
 id: time period
 section: events
