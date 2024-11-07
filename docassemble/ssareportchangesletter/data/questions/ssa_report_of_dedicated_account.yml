@@ -112,6 +112,7 @@ code: |
   gather_receipts
   if not used_for_valid_purpose:
     how_spending_benefited_client
+  rep_payee.signature
   # final_report
   store_variables_snapshot(data={'zip':client.address.zip,
     'city': client.address.city,
